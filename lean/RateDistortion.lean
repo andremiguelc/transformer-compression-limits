@@ -1,1 +1,4 @@
 import RateDistortion.Basic
+import RateDistortion.Entropy
+import RateDistortion.GGD
+import RateDistortion.Quantization
