@@ -5,11 +5,20 @@ Formalized proofs of rate-distortion theory bounds in Lean 4.
 ## Contents
 
 - `RateDistortion/` - Rate-distortion bounds for Gaussian sources
-  - `Basic.lean` - Scalar Gaussian R(D) bound
-  - `WaterFilling.lean` - Vector case with water-filling (planned)
-  - `Entropy.lean` - Entropy primitives (bits/nats) and SLB helper
-  - `GGD.lean` - Generalized Gaussian density, moments, entropy (stubs)
-  - `Quantization.lean` - Dithered scalar quantizer scaffolding (stubs)
+  - `Basic.lean` - Core definitions (log2, entropy, SLB, log-concavity)
+  - `Axioms.lean` - Centralized axioms with references
+  - `RateDistortion.lean` - R(D) definition and RD gap
+  - `GaussianSmoothing.lean` - de Bruijn framework theorems
+  - `GGD/` - GGD-specific material, split by topic
+    - `Basic.lean` - Density and scale definitions
+    - `Moments.lean` - Normalization and moment formulas (stubs)
+    - `Entropy.lean` - GGD entropy formulas (stubs)
+    - `FisherInfo.lean` - Score and Fisher information (stubs)
+    - `LogConcave.lean` - Log-concavity proof (stub)
+  - `GGDRDBound.lean` - Main RD gap bound (stubs)
+  - `ECSQ.lean` - Optional ECSQ scaffolding
+  - `Entropy.lean` - Deprecated shim (re-exports `Basic`)
+  - `Quantization.lean` - Deprecated shim (re-exports `RateDistortion` and `ECSQ`)
 
 ## Building
 

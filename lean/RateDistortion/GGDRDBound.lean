@@ -1,6 +1,7 @@
 import Mathlib
-import RateDistortion.Entropy
-import RateDistortion.Quantization
+import RateDistortion.Basic
+import RateDistortion.Axioms
+import RateDistortion.RateDistortion
 import RateDistortion.GGD
 import RateDistortion.GaussianSmoothing
 
@@ -29,15 +30,22 @@ For GGD, we compute J_max explicitly using the closed-form Fisher information.
 -/
 
 /-!
-## Connection between GGD Fisher info and abstract Fisher info
+## RD gap bound template for unit-variance GGD
+
+This is a stub that ties the analytic work in the GGD files to the
+abstract RD definitions.
 -/
 
-/--
-The GGD-specific Fisher information matches the abstract Fisher info functional.
-This axiom connects our concrete GGD calculation to the abstract framework.
--/
-axiom ggdFisherInfo_eq_fisherInfo {beta alpha : ℝ} (hbeta : 0 < beta) (halpha : 0 < alpha) :
-  ggdFisherInfo beta alpha = fisherInfo (ggdDensity beta alpha)
+/-- Placeholder for the eventual explicit bound on the RD gap. -/
+def gapBound (beta : ℝ) : ℝ := by
+  -- TODO: define from the explicit correction term ε_β(D)
+  sorry
+
+theorem ggd_rd_gap_bound
+  {beta : ℝ} (hbeta : 1.6 ≤ beta ∧ beta ≤ 1.9)
+  {D : ℝ} (hD : (1 / 1000 : ℝ) ≤ D ∧ D ≤ (1 / 10 : ℝ)) :
+  rdGap (ggdDensity beta (alphaUnitVar beta)) D ≤ gapBound beta := by
+  sorry
 
 /-!
 ## Gaussian smoothing of GGD
@@ -48,13 +56,6 @@ However, we can still bound the Fisher information of the smoothed density.
 Key insight: Fisher information is non-increasing under Gaussian smoothing.
 This is a consequence of the data processing inequality.
 -/
-
-/--
-Fisher information decreases under Gaussian convolution.
-This is a fundamental property (related to data processing inequality).
--/
-axiom fisherInfo_gaussConv_decreasing (f : ℝ → ℝ) (s t : ℝ) (hs : 0 ≤ s) (hst : s ≤ t) :
-  fisherInfo (gaussConv f t) ≤ fisherInfo (gaussConv f s)
 
 /--
 At t = 0, Gaussian convolution is identity, so Fisher info is preserved.
@@ -120,12 +121,24 @@ For beta ≈ 1.7 and D ≈ 0.01 (4-bit distortion), we can compute explicit boun
 -/
 
 /--
-For beta = 1.7 (transformer weights), the Fisher information is bounded.
-
-This can be computed numerically: J(1.7) ≈ 1.5 for unit variance.
+For β ∈ [1, 2], unit-variance GGD has Fisher info J(β) ∈ [1, 2].
+At β = 2 (Gaussian), J = 1 exactly. As β → 1, J → 2.
 -/
-axiom ggd_fisher_unitVar_beta_1_7_bound :
-  ggdFisherInfo 1.7 (alphaUnitVar 1.7) ≤ 2.0
+theorem ggd_fisher_unitVar_bounds {beta : ℝ} (hbeta_lo : 1 ≤ beta) (hbeta_hi : beta ≤ 2) :
+  1 ≤ ggdFisherInfo beta (alphaUnitVar beta) ∧
+  ggdFisherInfo beta (alphaUnitVar beta) ≤ 2 := by
+  constructor
+  · -- Lower bound: J(β) ≥ 1 follows from Cramér-Rao for unit variance
+    -- For any unit-variance distribution, J ≥ 1/σ² = 1
+    sorry
+  · -- Upper bound: J(β) ≤ 2 follows from J being decreasing in β on [1,2]
+    -- and J(1) = 2 (Laplacian case)
+    sorry
+
+/-- Specialized bound for β = 1.7. -/
+theorem ggd_fisher_unitVar_beta_1_7_bound :
+  ggdFisherInfo 1.7 (alphaUnitVar 1.7) ≤ 2 :=
+  (ggd_fisher_unitVar_bounds (by norm_num : (1:ℝ) ≤ 1.7) (by norm_num : (1.7:ℝ) ≤ 2)).2
 
 /--
 For the 4-bit regime (D ≈ 0.01), the RD gap is small.

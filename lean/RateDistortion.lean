@@ -1,6 +1,7 @@
 import RateDistortion.Basic
-import RateDistortion.Entropy
+import RateDistortion.Axioms
+import RateDistortion.RateDistortion
 import RateDistortion.GGD
-import RateDistortion.Quantization
 import RateDistortion.GaussianSmoothing
 import RateDistortion.GGDRDBound
+import RateDistortion.ECSQ
