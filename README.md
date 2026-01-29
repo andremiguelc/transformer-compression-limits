@@ -26,9 +26,10 @@ This is "medium-tailed" behavior—between pure Gaussian (β = 2) and Laplacian 
 |--------|-------|----------------|
 | Mean β | ~1.7 | Slightly heavier tails than Gaussian |
 | KL(weights ∥ Gaussian) | ~0.004 bits | Weights are *essentially Gaussian* |
-| Entropy bonus Δh | ~0.26 bits | Minimal gain from GGD-aware codebooks |
+| Entropy bonus Δh | ~0.02 bits | Minimal gain from GGD-aware codebooks |
 
-**Implication**: The "non-Gaussianity bonus" is negligible. Modern transformer weights (Llama-3, Mistral) are well-behaved—no extreme outliers like older architectures (OPT, BLOOM).
+**Implication**: The "non-Gaussianity bonus" is negligible. Modern transformer weights (Llama-3, Mistral) are well-behaved—no extreme outliers like older architectures (OPT, BLOOM).  
+*Note:* An earlier ~0.26-bit estimate came from a unit-mixed entropy formula; the corrected bits entropy uses a $1/(\beta\ln 2)$ term.
 
 ### 2. The Gap from Shannon Bound
 
@@ -37,15 +38,15 @@ At 4-bit quantization (NF4), measured on MLP down-projection layers:
 | Quantity | Value |
 |----------|-------|
 | NF4 weight MSE | ~2.3 × 10⁻⁶ |
-| Gaussian Shannon bound D | ~3.6 × 10⁻⁷ |
-| **Naive gap** | ~0.86 bits |
 | True scalar R(D) via Blahut-Arimoto | ~3.4 bits |
-| Shannon Lower Bound (SLB) | ~3.14 bits |
-| **True SLB gap** | **~0.26 bits** |
+| Shannon Lower Bound (SLB, corrected) | ~3.41 bits |
+| **True SLB gap** | **≈ 0.00 bits (≈ −0.002)** |
+| NF4 operating rate | 4.0 bits |
+| **NF4 − R(D)** | **~0.60 bits** |
 
-The apparent 0.86-bit gap decomposes into:
-- **~0.26 bits**: Inherent gap between scalar R(D) and SLB (not recoverable by any scalar quantizer)
-- **~0.6 bits**: Suboptimality of NF4 relative to optimal scalar quantization
+The apparent gap is **not** a fundamental R(D)−SLB gap. Instead:
+- **≈ 0 bits**: Inherent gap between scalar R(D) and SLB (essentially tight at D≈10⁻²)
+- **~0.60 bits**: Suboptimality of NF4 relative to optimal scalar quantization (uniform grid + blockwise overhead)
 
 ### 3. Functional vs Weight Distortion: The Amplification Problem
 
@@ -79,7 +80,9 @@ $$R(D) \geq R_{\mathrm{SLB}}(D) = h(X) - \frac{1}{2}\log_2(2\pi e D)$$
 
 For GGD(β) with unit variance:
 
-$$h_{\mathrm{GGD}}(\beta) = \frac{1}{\beta} - \log_2\left(\frac{\beta}{2\Gamma(1/\beta)}\right)$$
+$$h_{\mathrm{GGD}}(\beta) = \frac{1}{\beta \ln 2} + \log_2\left(\frac{2\alpha_{\text{unit}}(\beta)\Gamma(1/\beta)}{\beta}\right)$$
+
+where $\alpha_{\text{unit}}(\beta) = \sqrt{\Gamma(1/\beta)/\Gamma(3/\beta)}$.
 
 ### Known Constant-Gap Result
 
@@ -87,7 +90,7 @@ For log-concave sources (including GGD with β ≥ 1):
 
 $$0 \leq R(D) - R_{\mathrm{SLB}}(D) \leq \log_2\sqrt{\frac{\pi e}{2}} \approx 1 \text{ bit}$$
 
-This is a *universal* bound—holds for all distortion levels. Our empirical finding is sharper: **~0.26 bits at 4-bit distortion levels** for β ≈ 1.7.
+This is a *universal* bound—holds for all distortion levels. Our empirical finding is sharper: **gap ≈ 0 bits (≈ −0.002)** at 4-bit distortion levels for β ≈ 1.7.
 
 ### The Functional Distortion Geometry
 
@@ -109,7 +112,7 @@ Based on the empirical findings, five concrete theorem targets have been identif
 
 $$R_{\mathrm{SLB}}(D) \leq R(D) \leq R_{\mathrm{SLB}}(D) + \Delta_\beta(D)$$
 
-with Δ_β explicit and ~0.2-0.4 bits in the 4-bit regime.
+with Δ_β explicit and on the order of 10⁻² bits in the 4-bit regime.
 
 **Why it matters**: Converts empirical observation into a theorem; clarifies when codebook engineering yields diminishing returns.
 
@@ -170,15 +173,15 @@ and derive optimal bit allocation as water-filling over G's eigenmodes.
 Layer β (GGD shape):  1.62 - 1.86 (mean ~1.7)
 Kurtosis:             3.2 - 4.1 (Gaussian = 3)
 KL to Gaussian:       ~0.004 bits
-Entropy vs Gaussian:  Δh ≈ 0.26 bits
+Entropy vs Gaussian:  Δh ≈ 0.02 bits
 ```
 
 ### Rate-Distortion at 4-bit (normalized distortion D ≈ 10⁻²)
 
 ```
-Shannon Lower Bound:           3.14 bits
+Shannon Lower Bound:           3.41 bits
 True scalar R(D) [BA solver]:  3.40 bits  
-Gap R(D) - SLB:                0.26 bits
+Gap R(D) - SLB:                -0.002 bits (≈ 0)
 NF4 operating point:           4.0 bits
 Gap NF4 - R(D):                0.60 bits
 ```
@@ -187,11 +190,11 @@ Gap NF4 - R(D):                0.60 bits
 
 | β | R(D) | R_SLB | Gap |
 |---|------|-------|-----|
-| 1.3 | 3.37 | 3.04 | 0.34 |
-| 1.7 | 3.40 | 3.15 | 0.26 |
-| 2.0 | 3.41 | 3.19 | 0.22 |
+| 1.3 | 3.373 | 3.375 | -0.002 |
+| 1.7 | 3.404 | 3.406 | -0.002 |
+| 2.0 | 3.408 | 3.410 | -0.002 |
 
-As β → 2 (more Gaussian), the gap shrinks—Gaussian sources make SLB tightest.
+Across β, the gap is essentially zero (small negative values reflect BA discretization).
 
 ---
 
@@ -201,9 +204,9 @@ As β → 2 (more Gaussian), the gap shrinks—Gaussian sources make SLB tightes
 
 1. **KL = 0.004 bits**: Don't bother modeling the distribution more precisely. Gaussian is fine.
 
-2. **Δh = 0.26 bits**: There's a small theoretical gain from GGD-aware quantization, but NF4 is already close.
+2. **Δh = 0.02 bits**: There's a tiny theoretical gain from GGD-aware quantization, but NF4 is already close.
 
-3. **SLB gap = 0.26 bits**: Scalar codebook engineering has ~0.6 bits of headroom, not 0.86 bits.
+3. **SLB gap ≈ 0 bits**: The fundamental gap is essentially zero; the ~0.6-bit headroom is from quantizer constraints, not R(D)−SLB.
 
 4. **Amplification = 10⁵-10⁶**: The real opportunity is in functional distortion, not weight MSE.
 
@@ -211,7 +214,7 @@ As β → 2 (more Gaussian), the gap shrinks—Gaussian sources make SLB tightes
 
 ### Research Direction: Theory over Algorithms
 
-The ~1 bit gap is real but small. The more promising direction is **theoretical formalization**:
+The universal ~1-bit bound is real but loose; empirically the gap is ~0 for GGD. The more promising direction is **theoretical formalization**:
 
 - **What exists**: Empirical measurements of β, gaps, amplification ratios
 - **What's missing**: Proofs that these observations are fundamental
