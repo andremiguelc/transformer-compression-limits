@@ -134,9 +134,9 @@ axiom entropyPower_gaussian (sigma : ℝ) (hsigma : 0 < sigma) :
   entropyPower (fun x => (1 / (sigma * Real.sqrt (2 * Real.pi))) *
     Real.exp (- x ^ 2 / (2 * sigma ^ 2))) = sigma ^ 2
 
-/-- Entropy power inequality (Stam). -/
-axiom entropyPower_additive (f g : ℝ → ℝ) :
-  entropyPower (gaussConv f 0) ≥ entropyPower f + entropyPower g
+/-- Entropy power inequality for Gaussian smoothing (Stam). -/
+axiom entropyPower_additive (f : ℝ → ℝ) (t : ℝ) (ht : 0 ≤ t) :
+  entropyPower (gaussConv f t) ≥ entropyPower f + t
 
 /-- de Bruijn identity: ∂h(X_t)/∂t = (1/2)J(X_t). -/
 axiom deBruijn (f : ℝ → ℝ) (t : ℝ) (ht : 0 < t) :
