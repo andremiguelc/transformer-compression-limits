@@ -157,7 +157,7 @@ and derive optimal bit allocation as water-filling over G's eigenmodes.
 │   ├── 01_weight_statistics.ipynb         # GGD fitting, kurtosis, KL analysis
 │   ├── 02_1_quantization_rate_distortion.ipynb  # Scalar/group quantization R(D)
 │   └── 02_2_quantization_rate_distortion.ipynb  # NF4/FP4 comparison, BA solver
-└── lean/                                  # (Future) Formal proofs in Lean 4
+└── lean/                                  # Formal proofs in Lean 4 (Mathlib)
 ```
 
 ---
@@ -262,9 +262,12 @@ Formalizable contributions that don't require GPU clusters:
 - [ ] Test on Llama-3.2-3B and Mistral-7B for architecture comparison
 
 ### Formalization (Lean 4)
+- [x] Formalize GGD density, normalization, moments (proved)
+- [x] Prove main RD gap bound via Gaussian test channel + de Bruijn + Fisher info (proved, modulo axioms)
+- [ ] Complete nats-to-bits conversion for explicit bound in bits
+- [ ] Prove GGD Fisher information closed form
+- [ ] Prove log-form bound (Goal A: gap ≤ ½ log₂(1 + D·J))
 - [ ] Formalize GGD entropy formula
-- [ ] Prove SLB gap bound for β ∈ [1.6, 1.9]
-- [ ] Formalize Lloyd-Max optimality conditions
 
 ### Extensions
 - [ ] Hardware-constrained R(D) with per-group scaling
