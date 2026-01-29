@@ -165,6 +165,10 @@ axiom gaussianTestChannel_achievable (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D) :
 /-- Fisher information decreases under Gaussian convolution. -/
 axiom fisherInfo_gaussConv_decreasing (f : ℝ → ℝ) (s t : ℝ) (hs : 0 ≤ s) (hst : s ≤ t) :
   fisherInfo (gaussConv f t) ≤ fisherInfo (gaussConv f s)
+
+/-- Fisher information along Gaussian smoothing is interval-integrable on [0, D]. -/
+axiom fisherInfo_gaussConv_intervalIntegrable (f : ℝ → ℝ) (D : ℝ) :
+  IntervalIntegrable (fun s => fisherInfo (gaussConv f s)) volume (0:ℝ) D
 end GaussianSmoothing
 
 section Integration

@@ -73,7 +73,18 @@ theorem ggd_fisherInfo_max_at_zero {beta alpha : ℝ} (hbeta : 1 < beta) (halpha
   -- Fisher information decreases under Gaussian smoothing
   -- At t = 0, it equals ggdFisherInfo
   -- For t > 0, it's smaller
-  sorry
+  have hdec :=
+    fisherInfo_gaussConv_decreasing (ggdDensity beta alpha) 0 t (by linarith) ht
+  -- rewrite gaussConv at 0 and connect to ggdFisherInfo
+  have h0 : fisherInfo (gaussConv (ggdDensity beta alpha) 0) =
+      ggdFisherInfo beta alpha := by
+    have hggd := ggdFisherInfo_eq_fisherInfo (beta := beta) (alpha := alpha)
+      (by linarith : 0 < beta) halpha
+    simpa [gaussConv_zero] using hggd.symm
+  calc
+    fisherInfo (gaussConv (ggdDensity beta alpha) t)
+        ≤ fisherInfo (gaussConv (ggdDensity beta alpha) 0) := hdec
+    _ = ggdFisherInfo beta alpha := h0
 
 /-!
 ## Main RD gap bound for GGD
@@ -94,7 +105,14 @@ theorem ggd_rd_gap_bound_fisher {beta alpha D : ℝ}
     ≤ (D / 2) * ggdFisherInfo beta alpha := by
   -- 1. Apply rdGap_bound_via_fisherBound from GaussianSmoothing.lean
   -- 2. Use ggd_fisherInfo_max_at_zero to bound Fisher info along smoothing path
-  sorry
+  have hJ :
+      ∀ s, 0 ≤ s → s ≤ D →
+        fisherInfo (gaussConv (ggdDensity beta alpha) s) ≤ ggdFisherInfo beta alpha := by
+    intro s hs0 hsD
+    exact ggd_fisherInfo_max_at_zero (beta := beta) (alpha := alpha) hbeta halpha s hs0
+  simpa using
+    (rdGap_bound_via_fisherBound (f := ggdDensity beta alpha) (D := D)
+      (J_max := ggdFisherInfo beta alpha) hD hJ)
 
 /--
 Convert the nats bound to bits for the unit-variance case.
