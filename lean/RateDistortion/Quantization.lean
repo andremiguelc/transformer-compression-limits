@@ -28,10 +28,51 @@ axiom dither_error_indep : True
 /-- MSE for subtractive dither equals delta^2 / 12. -/
 axiom dither_mse (delta : ℝ) : True
 
-/-- Discrete-to-differential entropy comparison for binning. -/
-axiom entropy_floor_le_diffEntropy (delta : ℝ) : True
+/-!
+  Core analytic lemmas for the ECSQ path.
 
-/-- Entropy increase under uniform smoothing. -/
-axiom smoothing_entropy_bound (delta : ℝ) : True
+  These are intentionally stated as structured stubs so we can “plug in”
+  GGD-specific estimates later (tail decay, log-concavity, Lipschitz bounds).
+-/
+
+/-- A tail function for later bookkeeping. -/
+def tailMass (f : ℝ → ℝ) (T : ℝ) : ℝ :=
+  ∫ x : ℝ, (if T ≤ |x| then f x else 0)
+
+/-- A Lipschitz-type control for a density. -/
+def lipConst (f f' : ℝ → ℝ) : ℝ :=
+  sInf {L : ℝ | 0 ≤ L ∧ ∀ x, |f' x| ≤ L}
+
+/--
+Discrete-to-differential entropy comparison for binning:
+`H(I) ≤ h(Y) - log2 Δ + η`, where η depends on local regularity and tails.
+
+We keep a structured statement so the correction term can be explicit later.
+-/
+axiom entropy_floor_le_diffEntropy
+  (f f' : ℝ → ℝ) (Δ T L η : ℝ) :
+  True
+
+/--
+Entropy increase under uniform smoothing:
+`h(X+U_Δ) - h(X) ≤ δ(Δ)` with δ made explicit.
+-/
+axiom smoothing_entropy_bound
+  (f : ℝ → ℝ) (Δ δ : ℝ) :
+  True
+
+/-- The classic scalar ECSQ constant: 1/2 log2((2πe)/12). -/
+def ecsqConstant : ℝ :=
+  (1 / 2) * log2 ((2 * Real.pi * Real.exp 1) / 12)
+
+/-- Template bound: entropy-coded scalar rate for dithered quantization. -/
+axiom ecsq_rate_upper_bound
+  (R hX D eps : ℝ) :
+  R ≤ hX - (1 / 2) * log2 (12 * D) + eps
+
+/-- Template bound: gap to SLB is constant + correction. -/
+axiom ecsq_gap_upper_bound
+  (R hX D eps : ℝ) :
+  R - shannonLowerBound hX D ≤ ecsqConstant + eps
 
 end RateDistortion
