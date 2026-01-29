@@ -25,4 +25,15 @@ def discreteEntropyBits (p : ℤ → ℝ) : ℝ :=
 def shannonLowerBound (hX D : ℝ) : ℝ :=
   hX - (1 / 2) * log2 (2 * Real.pi * Real.exp 1 * D)
 
+/--
+Log-concavity predicate for a nonnegative density.
+
+This is a lightweight definition to support later GGD-specific lemmas; it can be
+refined once we commit to a particular formalization in Mathlib.
+-/
+def IsLogConcave (f : ℝ → ℝ) : Prop :=
+  ∀ x y t : ℝ, 0 ≤ t ∧ t ≤ 1 →
+    f (t * x + (1 - t) * y) ≥
+      Real.exp (t * Real.log (f x) + (1 - t) * Real.log (f y))
+
 end RateDistortion
