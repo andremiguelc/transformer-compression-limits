@@ -1,5 +1,6 @@
 import Mathlib
 import RateDistortion.Entropy
+import RateDistortion.Quantization
 
 open scoped BigOperators
 open MeasureTheory
@@ -86,6 +87,24 @@ theorem ggd_fisher_info_unitVar
 theorem ggd_logconcave
   {beta alpha : ℝ} (hbeta : 1 ≤ beta) (halpha : 0 < alpha) :
   IsLogConcave (ggdDensity beta alpha) := by
+  sorry
+
+/-!
+  RD gap bound template for unit-variance GGD.
+
+  This is a stub that ties the analytic work in this file to the
+  abstract RD definitions in `Quantization.lean`.
+-/
+
+/-- Placeholder for the eventual explicit bound on the RD gap. -/
+def gapBound (beta : ℝ) : ℝ := by
+  -- TODO: define from the explicit correction term ε_β(D)
+  sorry
+
+theorem ggd_rd_gap_bound
+  {beta : ℝ} (hbeta : 1.6 ≤ beta ∧ beta ≤ 1.9)
+  {D : ℝ} (hD : (1 / 1000 : ℝ) ≤ D ∧ D ≤ (1 / 10 : ℝ)) :
+  rdGap (ggdDensity beta (alphaUnitVar beta)) D ≤ gapBound beta := by
   sorry
 
 end RateDistortion

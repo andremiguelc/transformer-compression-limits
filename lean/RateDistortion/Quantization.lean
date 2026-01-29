@@ -39,8 +39,8 @@ axiom dither_mse (delta : ℝ) : True
 def tailMass (f : ℝ → ℝ) (T : ℝ) : ℝ :=
   ∫ x : ℝ, (if T ≤ |x| then f x else 0)
 
-/-- A Lipschitz-type control for a density. -/
-def lipConst (f f' : ℝ → ℝ) : ℝ :=
+/-- A Lipschitz-type control for a derivative. -/
+def lipConst (f' : ℝ → ℝ) : ℝ :=
   sInf {L : ℝ | 0 ≤ L ∧ ∀ x, |f' x| ≤ L}
 
 /--
@@ -74,5 +74,26 @@ axiom ecsq_rate_upper_bound
 axiom ecsq_gap_upper_bound
   (R hX D eps : ℝ) :
   R - shannonLowerBound hX D ≤ ecsqConstant + eps
+
+/-!
+  Shannon rate–distortion function (stub).
+
+  We keep this definition schematic until we fix a concrete representation
+  of test channels and mutual information in Mathlib. This still lets us
+  state end-to-end theorems about the RD gap.
+-/
+
+set_option linter.unusedVariables false
+
+/-- Shannon rate–distortion function for a density `f` (bits). -/
+def rateDistortionFunction (f : ℝ → ℝ) (D : ℝ) : ℝ := by
+  -- TODO: infimum over test channels P_{X̂|X} with E[(X-X̂)^2] ≤ D of I(X;X̂)
+  -- This will require a formal notion of mutual information for densities.
+  sorry
+set_option linter.unusedVariables true
+
+/-- RD gap relative to the Shannon lower bound. -/
+def rdGap (f : ℝ → ℝ) (D : ℝ) : ℝ :=
+  rateDistortionFunction f D - shannonLowerBound (diffEntropyBits f) D
 
 end RateDistortion
