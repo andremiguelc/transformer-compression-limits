@@ -41,6 +41,12 @@ def IsLogConcave (f : ℝ → ℝ) : Prop :=
       Real.exp (t * Real.log (f x) + (1 - t) * Real.log (f y))
 
 /--
+A (probability) density on ℝ: nonnegative, integrable, and integrates to 1.
+-/
+def IsDensity (f : ℝ → ℝ) : Prop :=
+  (∀ x, 0 ≤ f x) ∧ Integrable (μ := volume) f ∧ (∫ x : ℝ, f x = 1)
+
+/--
 A density has finite Fisher information if its score is square-integrable.
 -/
 def HasFiniteFisherInfo (f : ℝ → ℝ) : Prop :=

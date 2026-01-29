@@ -37,6 +37,24 @@ theorem ggdDensity_integrable {beta alpha : ℝ} (hbeta : 0 < beta) (halpha : 0 
   unfold ggdDensity
   simpa using h2
 
+/-- The GGD density is nonnegative. -/
+theorem ggdDensity_nonneg {beta alpha : ℝ} (hbeta : 0 < beta) (halpha : 0 < alpha) :
+  ∀ x, 0 ≤ ggdDensity beta alpha x := by
+  intro x
+  have hGammaPos : 0 < Real.Gamma (1 / beta) := by
+    exact Real.Gamma_pos_of_pos (one_div_pos.mpr hbeta)
+  have hden : 0 < 2 * alpha * Real.Gamma (1 / beta) := by
+    have h2a : 0 < 2 * alpha := by nlinarith [halpha]
+    exact mul_pos h2a hGammaPos
+  have hCpos : 0 < ggdC beta alpha := by
+    unfold ggdC
+    exact div_pos hbeta hden
+  have hCnonneg : 0 ≤ ggdC beta alpha := le_of_lt hCpos
+  have hExp : 0 ≤ Real.exp (-(|x| / alpha) ^ beta) := by
+    exact le_of_lt (Real.exp_pos _)
+  unfold ggdDensity
+  exact mul_nonneg hCnonneg hExp
+
 /-- Normalization: integral of the density is one. -/
 theorem ggd_integral_eq_one {beta alpha : ℝ} (hbeta : 0 < beta) (halpha : 0 < alpha) :
     (∫ x : ℝ, ggdDensity beta alpha x) = 1 := by
@@ -83,6 +101,15 @@ theorem ggd_integral_eq_one {beta alpha : ℝ} (hbeta : 0 < beta) (halpha : 0 < 
           simp [hbase]
     _ = 1 := by
           field_simp [hbeta0, halpha0, hGamma0]
+
+/-- The GGD density is a probability density. -/
+theorem ggd_isDensity {beta alpha : ℝ} (hbeta : 0 < beta) (halpha : 0 < alpha) :
+  IsDensity (ggdDensity beta alpha) := by
+  refine ⟨?_, ?_, ?_⟩
+  · intro x
+    exact ggdDensity_nonneg hbeta halpha x
+  · exact ggdDensity_integrable hbeta halpha
+  · exact ggd_integral_eq_one hbeta halpha
 
 /-- Absolute moment formula. -/
 theorem ggd_abs_moment_integral

@@ -21,11 +21,12 @@ Gap bound via de Bruijn identity (in nats).
 The RD gap is bounded by the entropy increase under Gaussian smoothing,
 which equals (1/2) times the integral of Fisher information.
 -/
-theorem rdGap_via_deBruijn (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D) :
+theorem rdGap_via_deBruijn (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D)
+    (hf : IsDensity f) (hfi : HasFiniteFisherInfo f) :
   rateDistortionFunctionNats f D - diffEntropyNats f + (1/2) * Real.log (2 * Real.pi * Real.exp 1 * D)
     ≤ (1/2) * ∫ s in (0:ℝ)..D, fisherInfo (gaussConv f s) := by
-  have hAch := gaussianTestChannel_achievable f D hD
-  have hDeb := deBruijn_integrated f D hD
+  have hAch := gaussianTestChannel_achievable f D hD hf
+  have hDeb := deBruijn_integrated_from_zero f D hD hf hfi
   have h1 :
       rateDistortionFunctionNats f D - diffEntropyNats f +
         (1 / 2) * Real.log (2 * Real.pi * Real.exp 1 * D)
@@ -51,16 +52,17 @@ If Fisher information is bounded by J_max along the Gaussian smoothing path,
 then the RD gap is at most (D/2)·J_max.
 -/
 theorem rdGap_bound_via_fisherBound (f : ℝ → ℝ) (D J_max : ℝ)
-    (hD : 0 < D) (hJ : ∀ s, 0 ≤ s → s ≤ D → fisherInfo (gaussConv f s) ≤ J_max) :
+    (hD : 0 < D) (hf : IsDensity f) (hfi : HasFiniteFisherInfo f)
+    (hJ : ∀ s, 0 ≤ s → s ≤ D → fisherInfo (gaussConv f s) ≤ J_max) :
   rateDistortionFunctionNats f D - diffEntropyNats f +
       (1/2) * Real.log (2 * Real.pi * Real.exp 1 * D)
     ≤ (D / 2) * J_max := by
-  have h0 := rdGap_via_deBruijn f D hD
+  have h0 := rdGap_via_deBruijn f D hD hf hfi
   have hJ' : ∀ s, s ∈ Set.Icc (0:ℝ) D → fisherInfo (gaussConv f s) ≤ J_max := by
     intro s hs
     exact hJ s hs.1 hs.2
-  have hf : IntervalIntegrable (fun s => fisherInfo (gaussConv f s)) volume (0:ℝ) D :=
-    fisherInfo_gaussConv_intervalIntegrable f D
+  have hInt : IntervalIntegrable (fun s => fisherInfo (gaussConv f s)) volume (0:ℝ) D :=
+    fisherInfo_gaussConv_intervalIntegrable f D hf hfi
   have hg : IntervalIntegrable (fun _ : ℝ => J_max) volume (0:ℝ) D := by
     simpa using (intervalIntegrable_const (μ := (volume)) (a := (0:ℝ)) (b := D) (c := J_max))
   have hmono :
@@ -68,7 +70,7 @@ theorem rdGap_bound_via_fisherBound (f : ℝ → ℝ) (D J_max : ℝ)
         ≤ ∫ s in (0:ℝ)..D, J_max := by
     refine intervalIntegral.integral_mono_on (a := (0:ℝ)) (b := D)
       (μ := volume) (f := fun s => fisherInfo (gaussConv f s))
-      (g := fun _ => J_max) (hab := le_of_lt hD) (hf := hf) (hg := hg) hJ'
+      (g := fun _ => J_max) (hab := le_of_lt hD) (hf := hInt) (hg := hg) hJ'
   have hconst :
       (∫ s in (0:ℝ)..D, J_max) = D * J_max := by
     simpa using (intervalIntegral.integral_const (c := J_max) (a := (0:ℝ)) (b := D))
@@ -85,7 +87,8 @@ theorem rdGap_bound_via_fisherBound (f : ℝ → ℝ) (D J_max : ℝ)
 Convert the nats bound to bits for practical use.
 -/
 theorem rdGap_bits_via_fisherBound (f : ℝ → ℝ) (D J_max : ℝ)
-    (hD : 0 < D) (hJ : ∀ s, 0 ≤ s → s ≤ D → fisherInfo (gaussConv f s) ≤ J_max) :
+    (hD : 0 < D) (hf : IsDensity f) (hfi : HasFiniteFisherInfo f)
+    (hJ : ∀ s, 0 ≤ s → s ≤ D → fisherInfo (gaussConv f s) ≤ J_max) :
   rateDistortionFunctionBits f D - diffEntropyBits f +
       (1/2) * log2 (2 * Real.pi * Real.exp 1 * D)
     ≤ (D / (2 * Real.log 2)) * J_max := by

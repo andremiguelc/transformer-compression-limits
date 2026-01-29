@@ -87,9 +87,9 @@ section GaussianSmoothing
 /-- Gaussian convolution operator. -/
 axiom gaussConv (f : ℝ → ℝ) (t : ℝ) : ℝ → ℝ
 
-/-- Gaussian convolution preserves the density property (integrates to 1). -/
-axiom gaussConv_isDensity (f : ℝ → ℝ) (hf : ∫ x : ℝ, f x = 1) (t : ℝ) (ht : 0 ≤ t) :
-  ∫ x : ℝ, gaussConv f t x = 1
+/-- Gaussian convolution preserves the density property. -/
+axiom gaussConv_isDensity (f : ℝ → ℝ) (hf : IsDensity f) (t : ℝ) (ht : 0 ≤ t) :
+  IsDensity (gaussConv f t)
 
 /-- At t=0, Gaussian convolution is the identity. -/
 axiom gaussConv_zero (f : ℝ → ℝ) : gaussConv f 0 = f
@@ -139,12 +139,14 @@ axiom entropyPower_additive (f : ℝ → ℝ) (t : ℝ) (ht : 0 ≤ t) :
   entropyPower (gaussConv f t) ≥ entropyPower f + t
 
 /-- de Bruijn identity: ∂h(X_t)/∂t = (1/2)J(X_t). -/
-axiom deBruijn (f : ℝ → ℝ) (t : ℝ) (ht : 0 < t) :
+axiom deBruijn (f : ℝ → ℝ) (t : ℝ) (ht : 0 < t) (hf : IsDensity f)
+    (hfi : HasFiniteFisherInfo f) :
   deriv (fun s => diffEntropyNats (gaussConv f s)) t =
     (1 / 2) * fisherInfo (gaussConv f t)
 
 /-- Integrated de Bruijn: h(X_t) - h(X) = (1/2) ∫₀ᵗ J(X_s) ds. -/
-axiom deBruijn_integrated (f : ℝ → ℝ) (t : ℝ) (ht : 0 < t) :
+axiom deBruijn_integrated (f : ℝ → ℝ) (t : ℝ) (ht : 0 < t) (hf : IsDensity f)
+    (hfi : HasFiniteFisherInfo f) :
   diffEntropyNats (gaussConv f t) - diffEntropyNats f =
     (1 / 2) * ∫ s in (0:ℝ)..t, fisherInfo (gaussConv f s)
 
@@ -155,7 +157,7 @@ axiom fisherInfo_gaussConv_rightContinuous (f : ℝ → ℝ) (hf : HasFiniteFish
 
 /-- Integrated de Bruijn starting from t = 0 for regular densities. -/
 axiom deBruijn_integrated_from_zero (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D)
-    (hf : HasFiniteFisherInfo f) :
+    (hf : IsDensity f) (hfi : HasFiniteFisherInfo f) :
   diffEntropyNats (gaussConv f D) - diffEntropyNats f =
     (1 / 2) * ∫ s in (0:ℝ)..D, fisherInfo (gaussConv f s)
 
@@ -164,15 +166,18 @@ def gaussianTestChannelRate (f : ℝ → ℝ) (D : ℝ) : ℝ :=
   diffEntropyNats (gaussConv f D) - (1 / 2) * Real.log (2 * Real.pi * Real.exp 1 * D)
 
 /-- The Gaussian test channel provides an upper bound on R(D) (nats). -/
-axiom gaussianTestChannel_achievable (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D) :
+axiom gaussianTestChannel_achievable (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D)
+    (hf : IsDensity f) :
   rateDistortionFunctionNats f D ≤ gaussianTestChannelRate f D
 
 /-- Fisher information decreases under Gaussian convolution. -/
-axiom fisherInfo_gaussConv_decreasing (f : ℝ → ℝ) (s t : ℝ) (hs : 0 ≤ s) (hst : s ≤ t) :
+axiom fisherInfo_gaussConv_decreasing (f : ℝ → ℝ) (s t : ℝ) (hs : 0 ≤ s) (hst : s ≤ t)
+    (hf : IsDensity f) (hfi : HasFiniteFisherInfo f) :
   fisherInfo (gaussConv f t) ≤ fisherInfo (gaussConv f s)
 
 /-- Fisher information along Gaussian smoothing is interval-integrable on [0, D]. -/
-axiom fisherInfo_gaussConv_intervalIntegrable (f : ℝ → ℝ) (D : ℝ) :
+axiom fisherInfo_gaussConv_intervalIntegrable (f : ℝ → ℝ) (D : ℝ)
+    (hf : IsDensity f) (hfi : HasFiniteFisherInfo f) :
   IntervalIntegrable (fun s => fisherInfo (gaussConv f s)) volume (0:ℝ) D
 end GaussianSmoothing
 
