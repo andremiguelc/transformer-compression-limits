@@ -99,7 +99,7 @@ information (in nats).
 -/
 theorem ggd_rd_gap_bound_fisher {beta alpha D : ℝ}
     (hbeta : 1 < beta) (halpha : 0 < alpha) (hD : 0 < D) :
-  rateDistortionFunction (ggdDensity beta alpha) D
+  rateDistortionFunctionNats (ggdDensity beta alpha) D
     - diffEntropyNats (ggdDensity beta alpha)
     + (1/2) * Real.log (2 * Real.pi * Real.exp 1 * D)
     ≤ (D / 2) * ggdFisherInfo beta alpha := by
@@ -125,7 +125,7 @@ theorem ggd_rd_gap_bound_bits_unitVar {beta D : ℝ}
     ≤ (D / (2 * Real.log 2)) *
       (beta ^ 2 * (Real.Gamma (3 / beta) * Real.Gamma (2 - 1 / beta) /
         (Real.Gamma (1 / beta) ^ 2))) := by
-  unfold rdGap shannonLowerBound
+  simp [rdGap, rdGapBits, shannonLowerBound]
   -- This follows from:
   -- 1. ggd_rd_gap_bound_fisher (in nats)
   -- 2. Conversion from nats to bits: divide by ln(2)

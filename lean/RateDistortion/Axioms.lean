@@ -60,22 +60,27 @@ axiom ecsq_gap_upper_bound
 end Quantization
 
 section RateDistortion
+/-- Shannon rate–distortion function for a density `f` (nats). -/
+axiom rateDistortionFunctionNats (f : ℝ → ℝ) (D : ℝ) : ℝ
+
 /-- Shannon rate–distortion function for a density `f` (bits). -/
-axiom rateDistortionFunction (f : ℝ → ℝ) (D : ℝ) : ℝ
+def rateDistortionFunctionBits (f : ℝ → ℝ) (D : ℝ) : ℝ :=
+  rateDistortionFunctionNats f D / Real.log 2
 
-/-- R(D) is non-negative. -/
-axiom rateDistortionFunction_nonneg (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D) :
-  0 ≤ rateDistortionFunction f D
+/-- R(D) is non-negative (nats). -/
+axiom rateDistortionFunctionNats_nonneg (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D) :
+  0 ≤ rateDistortionFunctionNats f D
 
-/-- R(D) is non-increasing in D. -/
-axiom rateDistortionFunction_antitone (f : ℝ → ℝ) :
-  Antitone (rateDistortionFunction f)
+/-- R(D) is non-increasing in D (nats). -/
+axiom rateDistortionFunctionNats_antitone (f : ℝ → ℝ) :
+  Antitone (rateDistortionFunctionNats f)
 
-/-- R(D) achieves the Shannon lower bound for Gaussian sources. -/
-axiom rateDistortionFunction_gaussian (σ D : ℝ) (hσ : 0 < σ) (hD : 0 < D) (hDσ : D ≤ σ ^ 2) :
-  rateDistortionFunction
+/-- R(D) achieves the Shannon lower bound for Gaussian sources (nats). -/
+axiom rateDistortionFunctionNats_gaussian (σ D : ℝ) (hσ : 0 < σ) (hD : 0 < D)
+    (hDσ : D ≤ σ ^ 2) :
+  rateDistortionFunctionNats
       (fun x => (1 / (σ * Real.sqrt (2 * Real.pi))) * Real.exp (- x ^ 2 / (2 * σ ^ 2))) D =
-    (1 / 2) * log2 (σ ^ 2 / D)
+    (1 / 2) * Real.log (σ ^ 2 / D)
 end RateDistortion
 
 section GaussianSmoothing
@@ -158,9 +163,9 @@ axiom deBruijn_integrated_from_zero (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D)
 def gaussianTestChannelRate (f : ℝ → ℝ) (D : ℝ) : ℝ :=
   diffEntropyNats (gaussConv f D) - (1 / 2) * Real.log (2 * Real.pi * Real.exp 1 * D)
 
-/-- The Gaussian test channel provides an upper bound on R(D). -/
+/-- The Gaussian test channel provides an upper bound on R(D) (nats). -/
 axiom gaussianTestChannel_achievable (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D) :
-  rateDistortionFunction f D ≤ gaussianTestChannelRate f D
+  rateDistortionFunctionNats f D ≤ gaussianTestChannelRate f D
 
 /-- Fisher information decreases under Gaussian convolution. -/
 axiom fisherInfo_gaussConv_decreasing (f : ℝ → ℝ) (s t : ℝ) (hs : 0 ≤ s) (hst : s ≤ t) :

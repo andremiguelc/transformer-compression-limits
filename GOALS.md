@@ -50,9 +50,9 @@ For the **log form** (Goal A), use J(X_t) ≤ J(X)/(1 + t·J(X)) instead of J(X_
 
 | File | Contents |
 |------|----------|
-| `Basic.lean` | `log2`, `diffEntropyBits/Nats`, `shannonLowerBound`, `IsLogConcave`, `HasFiniteFisherInfo` |
+| `Basic.lean` | `log2`, `diffEntropyBits/Nats`, `shannonLowerBound`, `shannonLowerBoundNats`, `IsLogConcave`, `HasFiniteFisherInfo` |
 | `Axioms.lean` | All axioms: deBruijn, gaussConv, fisherInfo, test channel, GGD integration |
-| `RateDistortion.lean` | `rateDistortionFunction` (axiom), `rdGap` definition |
+| `RateDistortion.lean` | `rateDistortionFunctionNats`, `rateDistortionFunctionBits`, `rdGapNats`, `rdGapBits` |
 | `GGD/Basic.lean` | `ggdDensity`, `ggdC`, `alphaUnitVar` |
 | `GGD/Moments.lean` | `ggd_integral_eq_one`, `ggd_abs_moment_integral`, `ggd_second_moment` |
 | `GGD/Entropy.lean` | `ggdEntropyNats/Bits`, `ggd_entropy_nats/bits` |
@@ -105,8 +105,9 @@ For the **log form** (Goal A), use J(X_t) ≤ J(X)/(1 + t·J(X)) instead of J(X_
 ## Axioms (Standard Results, in Axioms.lean)
 
 ### Core information-theoretic axioms
-- `rateDistortionFunction`: Shannon R(D) as an axiom (infimum over test channels)
-- `rateDistortionFunction_nonneg`, `_antitone`, `_gaussian`: basic properties
+- `rateDistortionFunctionNats`: Shannon R(D) as an axiom (infimum over test channels, nats)
+- `rateDistortionFunctionNats_nonneg`, `_antitone`, `_gaussian`: basic properties (nats)
+- `rateDistortionFunctionBits`: definition via `/ ln 2`
 - `gaussianTestChannel_achievable`: R(D) ≤ I(X; X+N) for N ~ N(0,D)
 
 ### Gaussian smoothing / de Bruijn axioms

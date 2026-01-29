@@ -22,12 +22,12 @@ The RD gap is bounded by the entropy increase under Gaussian smoothing,
 which equals (1/2) times the integral of Fisher information.
 -/
 theorem rdGap_via_deBruijn (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D) :
-  rateDistortionFunction f D - diffEntropyNats f + (1/2) * Real.log (2 * Real.pi * Real.exp 1 * D)
+  rateDistortionFunctionNats f D - diffEntropyNats f + (1/2) * Real.log (2 * Real.pi * Real.exp 1 * D)
     ≤ (1/2) * ∫ s in (0:ℝ)..D, fisherInfo (gaussConv f s) := by
   have hAch := gaussianTestChannel_achievable f D hD
   have hDeb := deBruijn_integrated f D hD
   have h1 :
-      rateDistortionFunction f D - diffEntropyNats f +
+      rateDistortionFunctionNats f D - diffEntropyNats f +
         (1 / 2) * Real.log (2 * Real.pi * Real.exp 1 * D)
         ≤ gaussianTestChannelRate f D - diffEntropyNats f +
           (1 / 2) * Real.log (2 * Real.pi * Real.exp 1 * D) := by
@@ -38,7 +38,7 @@ theorem rdGap_via_deBruijn (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D) :
         = diffEntropyNats (gaussConv f D) - diffEntropyNats f := by
     simp [gaussianTestChannelRate, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
   calc
-    rateDistortionFunction f D - diffEntropyNats f +
+    rateDistortionFunctionNats f D - diffEntropyNats f +
         (1 / 2) * Real.log (2 * Real.pi * Real.exp 1 * D)
         ≤ gaussianTestChannelRate f D - diffEntropyNats f +
           (1 / 2) * Real.log (2 * Real.pi * Real.exp 1 * D) := h1
@@ -52,7 +52,8 @@ then the RD gap is at most (D/2)·J_max.
 -/
 theorem rdGap_bound_via_fisherBound (f : ℝ → ℝ) (D J_max : ℝ)
     (hD : 0 < D) (hJ : ∀ s, 0 ≤ s → s ≤ D → fisherInfo (gaussConv f s) ≤ J_max) :
-  rateDistortionFunction f D - diffEntropyNats f + (1/2) * Real.log (2 * Real.pi * Real.exp 1 * D)
+  rateDistortionFunctionNats f D - diffEntropyNats f +
+      (1/2) * Real.log (2 * Real.pi * Real.exp 1 * D)
     ≤ (D / 2) * J_max := by
   have h0 := rdGap_via_deBruijn f D hD
   have hJ' : ∀ s, s ∈ Set.Icc (0:ℝ) D → fisherInfo (gaussConv f s) ≤ J_max := by
@@ -72,7 +73,7 @@ theorem rdGap_bound_via_fisherBound (f : ℝ → ℝ) (D J_max : ℝ)
       (∫ s in (0:ℝ)..D, J_max) = D * J_max := by
     simpa using (intervalIntegral.integral_const (c := J_max) (a := (0:ℝ)) (b := D))
   calc
-    rateDistortionFunction f D - diffEntropyNats f +
+    rateDistortionFunctionNats f D - diffEntropyNats f +
         (1 / 2) * Real.log (2 * Real.pi * Real.exp 1 * D)
         ≤ (1 / 2) * ∫ s in (0:ℝ)..D, fisherInfo (gaussConv f s) := h0
     _ ≤ (1 / 2) * ∫ s in (0:ℝ)..D, J_max := by
@@ -85,7 +86,8 @@ Convert the nats bound to bits for practical use.
 -/
 theorem rdGap_bits_via_fisherBound (f : ℝ → ℝ) (D J_max : ℝ)
     (hD : 0 < D) (hJ : ∀ s, 0 ≤ s → s ≤ D → fisherInfo (gaussConv f s) ≤ J_max) :
-  rateDistortionFunction f D - diffEntropyBits f + (1/2) * log2 (2 * Real.pi * Real.exp 1 * D)
+  rateDistortionFunctionBits f D - diffEntropyBits f +
+      (1/2) * log2 (2 * Real.pi * Real.exp 1 * D)
     ≤ (D / (2 * Real.log 2)) * J_max := by
   -- TODO: convert the nats bound to bits (algebraic rewrite + monotonicity of 1/log 2)
   sorry

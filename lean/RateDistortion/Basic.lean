@@ -25,6 +25,10 @@ def discreteEntropyBits (p : ℤ → ℝ) : ℝ :=
 def shannonLowerBound (hX D : ℝ) : ℝ :=
   hX - (1 / 2) * log2 (2 * Real.pi * Real.exp 1 * D)
 
+/-- Shannon lower bound for MSE, given h(X) in nats. -/
+def shannonLowerBoundNats (hX D : ℝ) : ℝ :=
+  hX - (1 / 2) * Real.log (2 * Real.pi * Real.exp 1 * D)
+
 /--
 Log-concavity predicate for a nonnegative density.
 
