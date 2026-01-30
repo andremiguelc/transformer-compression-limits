@@ -1,19 +1,74 @@
 import Mathlib
+import Mathlib.MeasureTheory.Group.Convolution
+import Mathlib.Probability.Distributions.Gaussian.Real
 import RateDistortion.Basic
 import RateDistortion.Axioms.RateDistortion
 
-open scoped BigOperators
+open scoped BigOperators MeasureTheory
 open MeasureTheory
 
 noncomputable section
 namespace RateDistortion
 
 section GaussianSmoothing
-/-- Gaussian convolution operator. -/
-axiom gaussConv (f : ℝ → ℝ) (t : ℝ) : ℝ → ℝ
+/-- Measure associated to a (real-valued) density. -/
+def densityMeasure (f : ℝ → ℝ) : Measure ℝ :=
+  volume.withDensity (fun x => ENNReal.ofReal (f x))
+
+instance densityMeasure_sfinite (f : ℝ → ℝ) : SFinite (densityMeasure f) := by
+  dsimp [densityMeasure]
+  infer_instance
+
+/-- Gaussian convolution at the measure level. -/
+def gaussConvMeasure (f : ℝ → ℝ) (t : ℝ) : Measure ℝ :=
+  densityMeasure f ∗ ProbabilityTheory.gaussianReal 0 (Real.toNNReal t)
+
+/-- Gaussian convolution operator (via measure convolution + RN-derivative). -/
+def gaussConv (f : ℝ → ℝ) (t : ℝ) : ℝ → ℝ :=
+  if t = 0 then
+    f
+  else
+    fun x =>
+      ((gaussConvMeasure f t).rnDeriv volume x).toReal
 
 /-- At t=0, Gaussian convolution is the identity. -/
-axiom gaussConv_zero (f : ℝ → ℝ) : gaussConv f 0 = f
+theorem gaussConv_zero (f : ℝ → ℝ) : gaussConv f 0 = f := by
+  simp [gaussConv]
+
+/-- At t=0, Gaussian convolution measure is the original density measure. -/
+theorem gaussConvMeasure_zero (f : ℝ → ℝ) : gaussConvMeasure f 0 = densityMeasure f := by
+  simp [gaussConvMeasure, ProbabilityTheory.gaussianReal_zero_var]
+
+/-- Additivity of Gaussian smoothing at the measure level for nonnegative times. -/
+theorem gaussConvMeasure_add (f : ℝ → ℝ) {t u : ℝ} (ht : 0 ≤ t) (hu : 0 ≤ u) :
+    gaussConvMeasure f (t + u) =
+      gaussConvMeasure f t ∗ ProbabilityTheory.gaussianReal 0 (Real.toNNReal u) := by
+  unfold gaussConvMeasure
+  have hgauss :
+      ProbabilityTheory.gaussianReal 0 (Real.toNNReal t) ∗
+          ProbabilityTheory.gaussianReal 0 (Real.toNNReal u) =
+        ProbabilityTheory.gaussianReal 0 (Real.toNNReal t + Real.toNNReal u) := by
+    simpa using
+      (ProbabilityTheory.gaussianReal_conv_gaussianReal
+        (m₁ := 0) (m₂ := 0) (v₁ := Real.toNNReal t) (v₂ := Real.toNNReal u))
+  calc
+    densityMeasure f ∗ ProbabilityTheory.gaussianReal 0 (Real.toNNReal (t + u))
+        =
+        densityMeasure f ∗
+          ProbabilityTheory.gaussianReal 0 (Real.toNNReal t + Real.toNNReal u) := by
+          simp [Real.toNNReal_add ht hu]
+    _ =
+        densityMeasure f ∗
+          (ProbabilityTheory.gaussianReal 0 (Real.toNNReal t) ∗
+            ProbabilityTheory.gaussianReal 0 (Real.toNNReal u)) := by
+          simp [hgauss]
+    _ =
+        (densityMeasure f ∗ ProbabilityTheory.gaussianReal 0 (Real.toNNReal t)) ∗
+          ProbabilityTheory.gaussianReal 0 (Real.toNNReal u) := by
+          simpa using
+            (MeasureTheory.Measure.conv_assoc (densityMeasure f)
+              (ProbabilityTheory.gaussianReal 0 (Real.toNNReal t))
+              (ProbabilityTheory.gaussianReal 0 (Real.toNNReal u))).symm
 
 /-- Fisher information functional for a density f. -/
 axiom fisherInfo (f : ℝ → ℝ) : ℝ
