@@ -2,7 +2,6 @@ import RateDistortion.Axioms.Quantization
 import RateDistortion.Axioms.RateDistortion
 import RateDistortion.Axioms.GaussianSmoothing
 import RateDistortion.Axioms.Stam
-import RateDistortion.Axioms.GGD
 
 /-!
 # Axioms for Rate–Distortion Theory

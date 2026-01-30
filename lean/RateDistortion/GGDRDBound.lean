@@ -2,7 +2,6 @@ import Mathlib
 import RateDistortion.Basic
 import RateDistortion.Axioms.GaussianSmoothing
 import RateDistortion.Axioms.Stam
-import RateDistortion.Axioms.GGD
 import RateDistortion.RateDistortion
 import RateDistortion.GGD
 import RateDistortion.GaussianSmoothing
@@ -92,9 +91,7 @@ theorem ggd_fisherInfo_max_at_zero {beta alpha : ℝ} (hbeta : 1 < beta) (halpha
     exact div_le_self hnonneg hdenom
   -- connect to ggdFisherInfo
   have h0 : fisherInfo (ggdDensity beta alpha) = ggdFisherInfo beta alpha := by
-    have hggd := ggdFisherInfo_eq_fisherInfo (beta := beta) (alpha := alpha)
-      (by linarith : 0 < beta) halpha
-    simpa using hggd.symm
+    simpa using (ggdFisherInfo_eq_fisherInfo (beta := beta) (alpha := alpha) hbeta halpha).symm
   calc
     fisherInfo (gaussConv (ggdDensity beta alpha) t)
         ≤ fisherInfo (ggdDensity beta alpha) /
