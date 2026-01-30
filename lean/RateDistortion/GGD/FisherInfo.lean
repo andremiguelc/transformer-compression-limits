@@ -1,6 +1,7 @@
 import Mathlib
 import RateDistortion.Basic
 import RateDistortion.GGD.Basic
+import RateDistortion.GGD.Moments
 
 open scoped BigOperators
 open MeasureTheory
@@ -22,7 +23,219 @@ theorem ggd_hasFiniteFisherInfo {beta alpha : ℝ} (hbeta : 1 < beta) (halpha : 
   -- The score is -(β/α^β) · sign(x) · |x|^(β-1)
   -- For β > 1, |x|^(β-1) → 0 as x → 0, so score is bounded near 0
   -- Square-integrability follows from exponential tail decay
-  sorry
+  classical
+  refine ⟨ggdScore beta alpha, ?_, ?_⟩
+  · intro x hx
+    -- ggdDensity is positive, so hx is unused; compute derivative directly
+    have hbeta_pos : 0 < beta := by linarith
+    have hGammaPos : 0 < Real.Gamma (1 / beta) := by
+      exact Real.Gamma_pos_of_pos (one_div_pos.mpr hbeta_pos)
+    have hden : 0 < 2 * alpha * Real.Gamma (1 / beta) := by
+      have h2a : 0 < 2 * alpha := by nlinarith [halpha]
+      exact mul_pos h2a hGammaPos
+    have hCpos : 0 < ggdC beta alpha := by
+      unfold ggdC
+      exact div_pos hbeta_pos hden
+    have hlog :
+        (fun y : ℝ => Real.log (ggdDensity beta alpha y)) =
+          fun y : ℝ => Real.log (ggdC beta alpha) + (-(|y| / alpha) ^ beta) := by
+      funext y
+      have hExp : 0 < Real.exp (-(|y| / alpha) ^ beta) := by
+        exact Real.exp_pos _
+      have hCne : ggdC beta alpha ≠ 0 := ne_of_gt hCpos
+      have hExpne : Real.exp (-(|y| / alpha) ^ beta) ≠ 0 := ne_of_gt hExp
+      calc
+        Real.log (ggdDensity beta alpha y)
+            = Real.log (ggdC beta alpha * Real.exp (-(|y| / alpha) ^ beta)) := by
+                rfl
+        _ = Real.log (ggdC beta alpha) +
+              Real.log (Real.exp (-(|y| / alpha) ^ beta)) := by
+                simpa using
+                  (Real.log_mul (x := ggdC beta alpha)
+                    (y := Real.exp (-(|y| / alpha) ^ beta)) hCne hExpne)
+        _ = Real.log (ggdC beta alpha) + (-(|y| / alpha) ^ beta) := by
+              simp
+    have hpow_abs :
+        HasDerivAt (fun y : ℝ => |y| ^ beta) (beta * |x| ^ (beta - 2) * x) x := by
+      simpa using (hasDerivAt_abs_rpow (x := x) (p := beta) hbeta)
+    have hdiv_fun :
+        (fun y : ℝ => (|y| / alpha) ^ beta) =
+          fun y : ℝ => (1 / alpha ^ beta) * (|y| ^ beta) := by
+      funext y
+      have hy : 0 ≤ |y| := abs_nonneg y
+      have ha : 0 ≤ alpha := le_of_lt halpha
+      calc
+        (|y| / alpha) ^ beta = |y| ^ beta / alpha ^ beta := by
+          simpa using (Real.div_rpow hy ha beta)
+        _ = (1 / alpha ^ beta) * |y| ^ beta := by
+          ring
+    have hpow_div :
+        HasDerivAt (fun y : ℝ => (|y| / alpha) ^ beta)
+          ((1 / alpha ^ beta) * (beta * |x| ^ (beta - 2) * x)) x := by
+      simpa [hdiv_fun] using (hpow_abs.const_mul (1 / alpha ^ beta))
+    have hneg :
+        HasDerivAt (fun y : ℝ => - (|y| / alpha) ^ beta)
+          (-((1 / alpha ^ beta) * (beta * |x| ^ (beta - 2) * x))) x := by
+      simpa using hpow_div.neg
+    have hderiv :
+        deriv (fun y : ℝ => Real.log (ggdDensity beta alpha y)) x =
+          -((1 / alpha ^ beta) * (beta * |x| ^ (beta - 2) * x)) := by
+      have h1 :
+          deriv (fun y : ℝ => Real.log (ggdDensity beta alpha y)) x =
+            deriv (fun y : ℝ => - (|y| / alpha) ^ beta) x := by
+        simpa [hlog] using
+          (deriv_const_add (f := fun y : ℝ => - (|y| / alpha) ^ beta)
+            (c := Real.log (ggdC beta alpha)) (x := x))
+      have h2 :
+          deriv (fun y : ℝ => - (|y| / alpha) ^ beta) x =
+            -((1 / alpha ^ beta) * (beta * |x| ^ (beta - 2) * x)) := by
+        simpa using hneg.deriv
+      exact h1.trans h2
+    have hsign_abs : Real.sign x * |x| = x := by
+      by_cases hx0 : x = 0
+      · simp [hx0]
+      · have hxlt : x < 0 ∨ 0 < x := lt_or_gt_of_ne hx0
+        cases hxlt with
+        | inl hlt =>
+            simp [Real.sign_of_neg hlt, abs_of_neg hlt, mul_comm, mul_left_comm, mul_assoc]
+        | inr hgt =>
+            simp [Real.sign_of_pos hgt, abs_of_pos hgt]
+    have hpow_sign :
+        Real.sign x * |x| ^ (beta - 1) = |x| ^ (beta - 2) * x := by
+      by_cases hx0 : x = 0
+      · simp [hx0]
+      · have hxne : |x| ≠ 0 := by
+          simpa [abs_eq_zero] using hx0
+        have hpow : |x| ^ (beta - 1) = |x| ^ (beta - 2) * |x| := by
+          calc
+            |x| ^ (beta - 1) = |x| ^ ((beta - 2) + 1) := by ring_nf
+            _ = |x| ^ (beta - 2) * |x| := by
+                  simpa using (Real.rpow_add_one (x := |x|) (y := beta - 2) hxne)
+        calc
+          Real.sign x * |x| ^ (beta - 1)
+              = Real.sign x * (|x| ^ (beta - 2) * |x|) := by simp [hpow]
+          _ = |x| ^ (beta - 2) * (Real.sign x * |x|) := by ring
+          _ = |x| ^ (beta - 2) * x := by simp [hsign_abs]
+    have hscore :
+        ggdScore beta alpha x =
+          -((1 / alpha ^ beta) * (beta * |x| ^ (beta - 2) * x)) := by
+      unfold ggdScore
+      calc
+        - (beta / alpha ^ beta) * Real.sign x * |x| ^ (beta - 1)
+            = -((1 / alpha ^ beta) * (beta * (Real.sign x * |x| ^ (beta - 1)))) := by
+                ring
+        _ = -((1 / alpha ^ beta) * (beta * (|x| ^ (beta - 2) * x))) := by
+                simp [hpow_sign]
+        _ = -((1 / alpha ^ beta) * (beta * |x| ^ (beta - 2) * x)) := by
+                ring
+    simpa [hscore] using hderiv.symm
+  · -- integrability via moment formula
+    have hbeta_pos : 0 < beta := by linarith
+    have hp : -1 < 2 * (beta - 1) := by linarith
+    have hmoment :=
+      ggd_abs_moment_integral (beta := beta) (alpha := alpha) (p := 2 * (beta - 1))
+        hbeta_pos halpha hp
+    have hpow2 : ∀ x : ℝ, (|x| ^ (beta - 1)) ^ 2 = |x| ^ (2 * (beta - 1)) := by
+      intro x
+      have hxnonneg : 0 ≤ |x| := abs_nonneg x
+      calc
+        (|x| ^ (beta - 1)) ^ 2 = (|x| ^ (beta - 1)) ^ (2 : ℝ) := by
+          symm; exact (Real.rpow_natCast (|x| ^ (beta - 1)) 2)
+        _ = |x| ^ ((beta - 1) * 2) := by
+          symm; exact (Real.rpow_mul hxnonneg (beta - 1) 2)
+        _ = |x| ^ (2 * (beta - 1)) := by ring_nf
+    have hsignpow : ∀ x : ℝ, (Real.sign x) ^ 2 * |x| ^ (2 * (beta - 1))
+        = |x| ^ (2 * (beta - 1)) := by
+      intro x
+      by_cases hx0 : x = 0
+      · have hne : (2 * (beta - 1)) ≠ 0 := by nlinarith [hbeta]
+        simp [hx0, hne]
+      · obtain hs | hs := Real.sign_apply_eq_of_ne_zero x hx0 <;> simp [hs]
+    have hrew :
+        (fun x : ℝ =>
+            (ggdScore beta alpha x) ^ 2 * ggdDensity beta alpha x) =
+          fun x : ℝ =>
+            (beta / alpha ^ beta) ^ 2 *
+              |x| ^ (2 * (beta - 1)) * ggdDensity beta alpha x := by
+      funext x
+      unfold ggdScore
+      have hpow2' := hpow2 x
+      have hbc :
+          (Real.sign x) ^ 2 * (|x| ^ (beta - 1)) ^ 2 = |x| ^ (2 * (beta - 1)) := by
+        calc
+          (Real.sign x) ^ 2 * (|x| ^ (beta - 1)) ^ 2
+              = (Real.sign x) ^ 2 * |x| ^ (2 * (beta - 1)) := by
+                  simp [hpow2']
+          _ = |x| ^ (2 * (beta - 1)) := by
+                simpa using hsignpow x
+      calc
+        (-(beta / alpha ^ beta) * Real.sign x * |x| ^ (beta - 1)) ^ 2 *
+            ggdDensity beta alpha x
+            =
+            (beta / alpha ^ beta) ^ 2 * (Real.sign x) ^ 2 *
+              (|x| ^ (beta - 1)) ^ 2 * ggdDensity beta alpha x := by
+                ring
+        _ =
+            (beta / alpha ^ beta) ^ 2 *
+              ((Real.sign x) ^ 2 * (|x| ^ (beta - 1)) ^ 2) *
+                ggdDensity beta alpha x := by
+            ring_nf
+        _ = (beta / alpha ^ beta) ^ 2 *
+              |x| ^ (2 * (beta - 1)) * ggdDensity beta alpha x := by
+            exact
+              congrArg
+                (fun t =>
+                  (beta / alpha ^ beta) ^ 2 * t * ggdDensity beta alpha x)
+                hbc
+    have hconst_pos : 0 < (beta / alpha ^ beta) ^ 2 := by
+      have hpowpos : 0 < alpha ^ beta := by
+        exact Real.rpow_pos_of_pos halpha _
+      have hfrac : 0 < beta / alpha ^ beta := by
+        exact div_pos hbeta_pos hpowpos
+      nlinarith
+    have hGammaPos : 0 < Real.Gamma ((2 * (beta - 1) + 1) / beta) := by
+      have hnum : 0 < 2 * (beta - 1) + 1 := by linarith
+      have harg : 0 < (2 * (beta - 1) + 1) / beta := by
+        exact div_pos hnum hbeta_pos
+      exact Real.Gamma_pos_of_pos harg
+    have hGammaPos' : 0 < Real.Gamma (1 / beta) := by
+      exact Real.Gamma_pos_of_pos (one_div_pos.mpr hbeta_pos)
+    have halpha_pos : 0 < alpha ^ (2 * (beta - 1)) := by
+      exact Real.rpow_pos_of_pos halpha _
+    have hmoment_pos :
+        0 <
+          alpha ^ (2 * (beta - 1)) *
+            Real.Gamma ((2 * (beta - 1) + 1) / beta) / Real.Gamma (1 / beta) := by
+      exact div_pos (mul_pos halpha_pos hGammaPos) hGammaPos'
+    have hval :
+        (∫ x : ℝ, |x| ^ (2 * (beta - 1)) * ggdDensity beta alpha x) =
+          alpha ^ (2 * (beta - 1)) *
+            Real.Gamma ((2 * (beta - 1) + 1) / beta) / Real.Gamma (1 / beta) := by
+      simpa using hmoment
+    have hcalc :
+        (∫ x : ℝ, (ggdScore beta alpha x) ^ 2 * ggdDensity beta alpha x) =
+          (beta / alpha ^ beta) ^ 2 *
+            (alpha ^ (2 * (beta - 1)) *
+              Real.Gamma ((2 * (beta - 1) + 1) / beta) / Real.Gamma (1 / beta)) := by
+      have h0 :
+          (∫ x : ℝ, (ggdScore beta alpha x) ^ 2 * ggdDensity beta alpha x) =
+            (beta / alpha ^ beta) ^ 2 *
+              ∫ x : ℝ, |x| ^ (2 * (beta - 1)) * ggdDensity beta alpha x := by
+        simpa [hrew, mul_assoc] using
+          (MeasureTheory.integral_const_mul
+            (r := (beta / alpha ^ beta) ^ 2)
+            (f := fun x : ℝ => |x| ^ (2 * (beta - 1)) * ggdDensity beta alpha x))
+      simpa [hval] using h0
+    have hpos :
+        0 <
+          (beta / alpha ^ beta) ^ 2 *
+            (alpha ^ (2 * (beta - 1)) *
+              Real.Gamma ((2 * (beta - 1) + 1) / beta) / Real.Gamma (1 / beta)) := by
+      exact mul_pos hconst_pos hmoment_pos
+    have hne :
+        (∫ x : ℝ, (ggdScore beta alpha x) ^ 2 * ggdDensity beta alpha x) ≠ 0 := by
+      nlinarith [hcalc, hpos]
+    exact (Integrable.of_integral_ne_zero (μ := volume) hne)
 
 /-- Fisher information closed form (general scale). -/
 theorem ggd_fisher_info_formula
