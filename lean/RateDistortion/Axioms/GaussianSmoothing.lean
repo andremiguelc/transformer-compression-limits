@@ -40,7 +40,12 @@ axiom deBruijn (f : ℝ → ℝ) (t : ℝ) (ht : 0 < t) (hf : IsDensity f)
   deriv (fun s => diffEntropyNats (gaussConv f s)) t =
     (1 / 2) * fisherInfo (gaussConv f t)
 
-/-- Integrated de Bruijn starting from t = 0 for regular densities. -/
+/--
+Integrated de Bruijn identity starting from t = 0 for regular densities.
+
+Reference: standard de Bruijn identity; see Palomar–Verdú (2006) and related
+information/estimation theory treatments for the Gaussian smoothing form.
+-/
 axiom deBruijn_integrated_from_zero (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D)
     (hf : IsDensity f) (hfi : HasFiniteFisherInfo f) :
   diffEntropyNats (gaussConv f D) - diffEntropyNats f =
@@ -50,7 +55,12 @@ axiom deBruijn_integrated_from_zero (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D)
 def gaussianTestChannelRate (f : ℝ → ℝ) (D : ℝ) : ℝ :=
   diffEntropyNats (gaussConv f D) - (1 / 2) * Real.log (2 * Real.pi * Real.exp 1 * D)
 
-/-- The Gaussian test channel provides an upper bound on R(D) (nats). -/
+/--
+The Gaussian test channel provides an upper bound on R(D) (nats).
+
+Reference: standard rate–distortion theory (e.g. Cover–Thomas); see also
+Gaussian test-channel achievability discussions in classical RD texts.
+-/
 axiom gaussianTestChannel_achievable (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D)
     (hf : IsDensity f) :
   rateDistortionFunctionNats f D ≤ gaussianTestChannelRate f D
