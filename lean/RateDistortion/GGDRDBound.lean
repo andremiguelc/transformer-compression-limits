@@ -71,9 +71,8 @@ For GGD, Fisher information is maximized at t = 0 (no smoothing).
 theorem ggd_fisherInfo_max_at_zero {beta alpha : ℝ} (hbeta : 1 < beta) (halpha : 0 < alpha)
     (t : ℝ) (ht : 0 ≤ t) :
   fisherInfo (gaussConv (ggdDensity beta alpha) t) ≤ ggdFisherInfo beta alpha := by
-  -- Fisher information decreases under Gaussian smoothing
-  -- At t = 0, it equals ggdFisherInfo
-  -- For t > 0, it's smaller
+  -- Fisher information decreases under Gaussian smoothing (Stam inequality).
+  -- At t = 0, it equals the GGD Fisher info; for t > 0, it can only drop.
   have hden : IsDensity (ggdDensity beta alpha) :=
     ggd_isDensity (by linarith : 0 < beta) halpha
   have hfi : HasFiniteFisherInfo (ggdDensity beta alpha) :=
@@ -86,6 +85,7 @@ theorem ggd_fisherInfo_max_at_zero {beta alpha : ℝ} (hbeta : 1 < beta) (halpha
         ≤ fisherInfo (ggdDensity beta alpha) := by
     have hnonneg : 0 ≤ fisherInfo (ggdDensity beta alpha) :=
       fisherInfo_nonneg (ggdDensity beta alpha)
+    -- Denominator ≥ 1, so division only decreases a nonnegative numerator.
     have hdenom : 1 ≤ 1 + t * fisherInfo (ggdDensity beta alpha) := by
       nlinarith [hnonneg, ht]
     exact div_le_self hnonneg hdenom
@@ -116,8 +116,8 @@ theorem ggd_rd_gap_bound_fisher {beta alpha D : ℝ}
     - diffEntropyNats (ggdDensity beta alpha)
     + (1/2) * Real.log (2 * Real.pi * Real.exp 1 * D)
     ≤ (D / 2) * ggdFisherInfo beta alpha := by
-  -- 1. Apply rdGap_bound_via_fisherBound from GaussianSmoothing.lean
-  -- 2. Use ggd_fisherInfo_max_at_zero to bound Fisher info along smoothing path
+  -- 1) Apply the generic Fisher-bound template from GaussianSmoothing.lean.
+  -- 2) Use GGD-specific monotonicity under smoothing to bound J along [0, D].
   have hden : IsDensity (ggdDensity beta alpha) :=
     ggd_isDensity (by linarith : 0 < beta) halpha
   have hfi : HasFiniteFisherInfo (ggdDensity beta alpha) :=
@@ -142,10 +142,10 @@ theorem ggd_rd_gap_bound_bits_unitVar {beta D : ℝ}
     ≤ (D / (2 * Real.log 2)) *
       (beta ^ 2 * (Real.Gamma (3 / beta) * Real.Gamma (2 - 1 / beta) /
         (Real.Gamma (1 / beta) ^ 2))) := by
-  -- This follows from:
-  -- 1. ggd_rd_gap_bound_fisher (in nats)
-  -- 2. Conversion from nats to bits: divide by ln(2)
-  -- 3. Use ggd_fisher_info_unitVar for explicit formula
+  -- Plan:
+  -- 1) Use the nats bound from ggd_rd_gap_bound_fisher.
+  -- 2) Convert nats → bits by dividing by ln(2).
+  -- 3) Substitute the unit-variance Fisher info formula.
   have hbeta_pos : 0 < beta := by
     linarith
   have halpha : 0 < alphaUnitVar beta := by

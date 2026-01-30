@@ -22,6 +22,7 @@ def ggdFisherInfo (beta alpha : ℝ) : ℝ :=
 lemma ggdScore_eq_deriv_log {beta alpha : ℝ} (hbeta : 1 < beta) (halpha : 0 < alpha) :
     ∀ x, ggdScore beta alpha x = deriv (fun y => Real.log (ggdDensity beta alpha y)) x := by
   intro x
+  -- Expand log f into log C + log exp(...) to isolate the non-constant term.
   have hbeta_pos : 0 < beta := by linarith
   have hGammaPos : 0 < Real.Gamma (1 / beta) := by
     exact Real.Gamma_pos_of_pos (one_div_pos.mpr hbeta_pos)
@@ -50,6 +51,7 @@ lemma ggdScore_eq_deriv_log {beta alpha : ℝ} (hbeta : 1 < beta) (halpha : 0 < 
                   (y := Real.exp (-(|y| / alpha) ^ beta)) hCne hExpne)
       _ = Real.log (ggdC beta alpha) + (-(|y| / alpha) ^ beta) := by
             simp
+  -- Derivative of |x|^beta (valid for beta > 1, including at 0).
   have hpow_abs :
       HasDerivAt (fun y : ℝ => |y| ^ beta) (beta * |x| ^ (beta - 2) * x) x := by
     simpa using (hasDerivAt_abs_rpow (x := x) (p := beta) hbeta)
@@ -72,6 +74,7 @@ lemma ggdScore_eq_deriv_log {beta alpha : ℝ} (hbeta : 1 < beta) (halpha : 0 < 
       HasDerivAt (fun y : ℝ => - (|y| / alpha) ^ beta)
         (-((1 / alpha ^ beta) * (beta * |x| ^ (beta - 2) * x))) x := by
     simpa using hpow_div.neg
+  -- Chain rule through -( |x|/alpha )^beta, then use deriv_const_add to drop log C.
   have hderiv :
       deriv (fun y : ℝ => Real.log (ggdDensity beta alpha y)) x =
         -((1 / alpha ^ beta) * (beta * |x| ^ (beta - 2) * x)) := by
@@ -86,6 +89,7 @@ lemma ggdScore_eq_deriv_log {beta alpha : ℝ} (hbeta : 1 < beta) (halpha : 0 < 
           -((1 / alpha ^ beta) * (beta * |x| ^ (beta - 2) * x)) := by
       simpa using hneg.deriv
     exact h1.trans h2
+  -- Convert sign(x)*|x| to x to match the score expression.
   have hsign_abs : Real.sign x * |x| = x := by
     by_cases hx0 : x = 0
     · simp [hx0]
@@ -111,6 +115,7 @@ lemma ggdScore_eq_deriv_log {beta alpha : ℝ} (hbeta : 1 < beta) (halpha : 0 < 
             = Real.sign x * (|x| ^ (beta - 2) * |x|) := by simp [hpow]
         _ = |x| ^ (beta - 2) * (Real.sign x * |x|) := by ring
         _ = |x| ^ (beta - 2) * x := by simp [hsign_abs]
+  -- Rewriting ggdScore into the same algebraic form as the derivative.
   have hscore :
       ggdScore beta alpha x =
         -((1 / alpha ^ beta) * (beta * |x| ^ (beta - 2) * x)) := by
@@ -158,6 +163,7 @@ theorem ggd_hasFiniteFisherInfo {beta alpha : ℝ} (hbeta : 1 < beta) (halpha : 
       · have hne : (2 * (beta - 1)) ≠ 0 := by nlinarith [hbeta]
         simp [hx0, hne]
       · obtain hs | hs := Real.sign_apply_eq_of_ne_zero x hx0 <;> simp [hs]
+    -- Rewrite the integrand into a constant multiple of |x|^(2β-2) * density.
     have hrew :
         (fun x : ℝ =>
             (ggdScore beta alpha x) ^ 2 * ggdDensity beta alpha x) =
@@ -219,6 +225,7 @@ theorem ggd_hasFiniteFisherInfo {beta alpha : ℝ} (hbeta : 1 < beta) (halpha : 
           alpha ^ (2 * (beta - 1)) *
             Real.Gamma ((2 * (beta - 1) + 1) / beta) / Real.Gamma (1 / beta) := by
       simpa using hmoment
+    -- Pull out the constant and apply the moment identity.
     have hcalc :
         (∫ x : ℝ, (ggdScore beta alpha x) ^ 2 * ggdDensity beta alpha x) =
           (beta / alpha ^ beta) ^ 2 *
@@ -249,6 +256,8 @@ theorem ggd_fisher_info_formula
   {beta alpha : ℝ} (hbeta : 1 < beta) (halpha : 0 < alpha) :
   ggdFisherInfo beta alpha =
     (beta ^ 2 / alpha ^ 2) * (Real.Gamma (2 - 1 / beta) / Real.Gamma (1 / beta)) := by
+  -- Strategy: rewrite the score-squared integral as a moment of |x|^(2β-2),
+  -- then apply the closed-form moment identity and simplify the α and Γ terms.
   have hbeta_pos : 0 < beta := by linarith
   have hp : -1 < 2 * (beta - 1) := by linarith
   have hmoment :=
@@ -304,10 +313,12 @@ theorem ggd_fisher_info_formula
               (fun t =>
                 (beta / alpha ^ beta) ^ 2 * t * ggdDensity beta alpha x)
               hbc
+  -- Simplify the Gamma argument: (2(β-1)+1)/β = 2 - 1/β.
   have hgamma :
       (2 * (beta - 1) + 1) / beta = 2 - 1 / beta := by
     have hbne : beta ≠ 0 := by linarith
     field_simp [hbne]; ring
+  -- Power algebra for α in rpow form.
   have hpow2a : (alpha ^ beta) ^ 2 = alpha ^ (2 * beta) := by
     have h := Real.rpow_mul (le_of_lt halpha) beta 2
     have h' : alpha ^ (beta * 2) = (alpha ^ beta) ^ 2 := by
@@ -320,6 +331,7 @@ theorem ggd_fisher_info_formula
       alpha ^ (2 * (beta - 1)) = alpha ^ (2 * beta - 2) := by ring_nf
       _ = alpha ^ (2 * beta) / alpha ^ 2 := by
             simpa using (Real.rpow_sub hpos (2 * beta) 2)
+  -- Collapse the prefactor (β / α^β)^2 * α^(2β-2) into β^2 / α^2.
   have hconst :
       (beta / alpha ^ beta) ^ 2 * alpha ^ (2 * (beta - 1)) =
         beta ^ 2 / alpha ^ 2 := by
@@ -338,6 +350,7 @@ theorem ggd_fisher_info_formula
               simp [hpow2a]
       _ = beta ^ 2 / alpha ^ 2 := by
               field_simp [hpowne, halphane]
+  -- Final assembly of the integral, then simplification.
   unfold ggdFisherInfo
   calc
     (∫ x : ℝ, (ggdScore beta alpha x) ^ 2 * ggdDensity beta alpha x) =
@@ -372,6 +385,7 @@ theorem ggd_fisher_info_unitVar
     beta ^ 2 *
       (Real.Gamma (3 / beta) * Real.Gamma (2 - 1 / beta) /
         (Real.Gamma (1 / beta) ^ 2)) := by
+  -- Specialize the general-scale formula and substitute α = alphaUnitVar.
   have hbeta_pos : 0 < beta := by linarith
   have hGamma1 : 0 < Real.Gamma (1 / beta) := by
     exact Real.Gamma_pos_of_pos (one_div_pos.mpr hbeta_pos)
@@ -385,6 +399,7 @@ theorem ggd_fisher_info_unitVar
   have halpha : 0 < alphaUnitVar beta := by
     unfold alphaUnitVar
     exact Real.sqrt_pos_of_pos hratio_pos
+  -- Square of alphaUnitVar equals the Gamma ratio.
   have hsq :
       (alphaUnitVar beta) ^ 2 =
         Real.Gamma (1 / beta) / Real.Gamma (3 / beta) := by
@@ -392,6 +407,7 @@ theorem ggd_fisher_info_unitVar
     have hnonneg : 0 ≤ Real.Gamma (1 / beta) / Real.Gamma (3 / beta) := by
       exact le_of_lt hratio_pos
     simpa using (Real.sq_sqrt hnonneg)
+  -- Invert the ratio to get 1/α^2.
   have hinv :
       1 / (alphaUnitVar beta) ^ 2 =
         Real.Gamma (3 / beta) / Real.Gamma (1 / beta) := by
@@ -404,6 +420,7 @@ theorem ggd_fisher_info_unitVar
         simpa using (inv_div (Real.Gamma (1 / beta)) (Real.Gamma (3 / beta)))
   have hgen :=
     ggd_fisher_info_formula (beta := beta) (alpha := alphaUnitVar beta) hbeta halpha
+  -- Combine and rearrange factors into the final closed form.
   calc
     ggdFisherInfo beta (alphaUnitVar beta) =
         (beta ^ 2 / (alphaUnitVar beta) ^ 2) *
@@ -432,6 +449,8 @@ theorem ggd_fisher_info_unitVar
 theorem ggdFisherInfo_eq_fisherInfo {beta alpha : ℝ}
     (hbeta : 1 < beta) (halpha : 0 < alpha) :
     ggdFisherInfo beta alpha = fisherInfo (ggdDensity beta alpha) := by
+  -- Use the smoothing axiom to compute Fisher info via the score,
+  -- then rewrite the score with the explicit GGD derivative.
   have hfi : HasFiniteFisherInfo (ggdDensity beta alpha) :=
     ggd_hasFiniteFisherInfo (beta := beta) (alpha := alpha) hbeta halpha
   have hJ :=

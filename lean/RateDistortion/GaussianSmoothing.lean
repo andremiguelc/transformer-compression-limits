@@ -25,8 +25,10 @@ theorem rdGap_via_deBruijn (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D)
     (hf : IsDensity f) (hfi : HasFiniteFisherInfo f) :
   rateDistortionFunctionNats f D - diffEntropyNats f + (1/2) * Real.log (2 * Real.pi * Real.exp 1 * D)
     ≤ (1/2) * ∫ s in (0:ℝ)..D, fisherInfo (gaussConv f s) := by
+  -- Use the Gaussian test-channel achievability and the integrated de Bruijn identity.
   have hAch := gaussianTestChannel_achievable f D hD hf
   have hDeb := deBruijn_integrated_from_zero f D hD hf hfi
+  -- Replace R(D) by the test-channel rate and rewrite the entropy difference.
   have h1 :
       rateDistortionFunctionNats f D - diffEntropyNats f +
         (1 / 2) * Real.log (2 * Real.pi * Real.exp 1 * D)
@@ -57,6 +59,7 @@ theorem rdGap_bound_via_fisherBound (f : ℝ → ℝ) (D J_max : ℝ)
   rateDistortionFunctionNats f D - diffEntropyNats f +
       (1/2) * Real.log (2 * Real.pi * Real.exp 1 * D)
     ≤ (D / 2) * J_max := by
+  -- Bound the Fisher integral by J_max on [0, D].
   have h0 := rdGap_via_deBruijn f D hD hf hfi
   have hJ' : ∀ s, s ∈ Set.Icc (0:ℝ) D → fisherInfo (gaussConv f s) ≤ J_max := by
     intro s hs
@@ -92,6 +95,7 @@ theorem rdGap_bits_via_fisherBound (f : ℝ → ℝ) (D J_max : ℝ)
   rateDistortionFunctionBits f D - diffEntropyBits f +
       (1/2) * log2 (2 * Real.pi * Real.exp 1 * D)
     ≤ (D / (2 * Real.log 2)) * J_max := by
+  -- Change of base: divide the nats inequality by log 2.
   have hNats :=
     rdGap_bound_via_fisherBound (f := f) (D := D) (J_max := J_max) hD hf hfi hJ
   have hlog2 : 0 < Real.log 2 := by

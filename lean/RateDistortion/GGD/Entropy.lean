@@ -19,6 +19,7 @@ def ggdEntropyBits (beta alpha : ℝ) : ℝ :=
 theorem ggd_entropy_nats
   {beta alpha : ℝ} (hbeta : 0 < beta) (halpha : 0 < alpha) :
   diffEntropyNats (ggdDensity beta alpha) = ggdEntropyNats beta alpha := by
+  -- Expand the definition of entropy and normalize the density constant.
   unfold diffEntropyNats ggdEntropyNats ggdDensity ggdC
   set C : ℝ := beta / (2 * alpha * Real.Gamma (1 / beta)) with hC
   have hGammaPos : 0 < Real.Gamma (1 / beta) := by
@@ -30,6 +31,7 @@ theorem ggd_entropy_nats
   have hCne : C ≠ 0 := ne_of_gt hCpos
   have hbeta0 : beta ≠ 0 := ne_of_gt hbeta
   have hGamma0 : Real.Gamma (1 / beta) ≠ 0 := ne_of_gt hGammaPos
+  -- Log of the density: log C minus the power term.
   have hlog :
       ∀ x,
         Real.log (C * Real.exp (-(|x| / alpha) ^ beta)) =
@@ -43,15 +45,18 @@ theorem ggd_entropy_nats
             simpa using (Real.log_mul hCne (ne_of_gt hExpPos))
       _ = Real.log C - (|x| / alpha) ^ beta := by
             simp [sub_eq_add_neg]
+  -- Density integrates to 1.
   have hI :
       (∫ x : ℝ, C * Real.exp (-(|x| / alpha) ^ beta)) = 1 := by
     simpa [ggdDensity, ggdC, hC] using (ggd_integral_eq_one hbeta halpha)
+  -- Apply the absolute-moment formula with p = beta.
   have hMoment0 :
       (∫ x : ℝ, |x| ^ beta * (C * Real.exp (-(|x| / alpha) ^ beta))) =
         alpha ^ beta * Real.Gamma ((beta + 1) / beta) / Real.Gamma (1 / beta) := by
     simpa [ggdDensity, ggdC, hC] using
       (ggd_abs_moment_integral (beta := beta) (alpha := alpha) (p := beta)
         hbeta halpha (by linarith))
+  -- Gamma recurrence at (1/beta)+1.
   have hGamma :
       Real.Gamma ((beta + 1) / beta) = (1 / beta) * Real.Gamma (1 / beta) := by
     have h1 : (beta + 1) / beta = (1 / beta) + 1 := by
@@ -63,6 +68,7 @@ theorem ggd_entropy_nats
       _ = (1 / beta) * Real.Gamma (1 / beta) := by
             simpa [one_div] using
               (Real.Gamma_add_one (s := beta⁻¹) (inv_ne_zero hbeta0))
+  -- Simplify the moment to alpha^beta / beta.
   have hMoment :
       (∫ x : ℝ, |x| ^ beta * (C * Real.exp (-(|x| / alpha) ^ beta))) =
         alpha ^ beta / beta := by
@@ -74,6 +80,7 @@ theorem ggd_entropy_nats
             Real.Gamma (1 / beta) := by simp [hGamma]
       _ = alpha ^ beta / beta := by
             field_simp [hGamma0, hbeta0]
+  -- Scale by alpha^beta to get E[(|X|/alpha)^beta] = 1/beta.
   have hMoment2 :
       (∫ x : ℝ, (C * Real.exp (-(|x| / alpha) ^ beta)) * (|x| / alpha) ^ beta) =
         1 / beta := by
@@ -200,6 +207,7 @@ theorem ggd_entropy_nats
               mul_assoc]
   have hlogC' :
       -Real.log C = Real.log (2 * alpha * Real.Gamma (1 / beta) / beta) := by
+    -- Algebra on logs to rewrite the normalization constant in the final form.
     have hden : (2 * alpha * Real.Gamma (1 / beta)) ≠ 0 := ne_of_gt hdenpos
     have hlog1 :
         Real.log (beta / (2 * alpha * Real.Gamma (1 / beta))) =
@@ -222,6 +230,7 @@ theorem ggd_entropy_nats
 theorem ggd_entropy_bits
   {beta alpha : ℝ} (hbeta : 0 < beta) (halpha : 0 < alpha) :
   diffEntropyBits (ggdDensity beta alpha) = ggdEntropyBits beta alpha := by
+  -- Change of base: log2(x) = log(x) / log 2, then pull the constant outside the integral.
   have hconv :
       diffEntropyBits (ggdDensity beta alpha) =
         (1 / Real.log 2) * diffEntropyNats (ggdDensity beta alpha) := by
