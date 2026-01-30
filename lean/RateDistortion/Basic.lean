@@ -17,6 +17,25 @@ def diffEntropyBits (f : ℝ → ℝ) : ℝ :=
 def diffEntropyNats (f : ℝ → ℝ) : ℝ :=
   - ∫ x : ℝ, f x * Real.log (f x)
 
+lemma diffEntropyBits_eq_div_log2 (f : ℝ → ℝ) :
+  diffEntropyBits f = diffEntropyNats f / Real.log 2 := by
+  unfold diffEntropyBits log2
+  have hrew :
+      (fun x : ℝ => f x * (Real.log (f x) / Real.log 2)) =
+        fun x : ℝ => (1 / Real.log 2) * (f x * Real.log (f x)) := by
+    funext x
+    ring
+  calc
+    -∫ x : ℝ, f x * (Real.log (f x) / Real.log 2)
+        = -∫ x : ℝ, (1 / Real.log 2) * (f x * Real.log (f x)) := by
+            simp [hrew]
+    _ = -(1 / Real.log 2) * ∫ x : ℝ, f x * Real.log (f x) := by
+          simp [MeasureTheory.integral_const_mul]
+    _ = (1 / Real.log 2) * (-∫ x : ℝ, f x * Real.log (f x)) := by
+          ring
+    _ = diffEntropyNats f / Real.log 2 := by
+          simp [diffEntropyNats, div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc]
+
 /-- Discrete entropy in bits for a pmf on Z. -/
 def discreteEntropyBits (p : ℤ → ℝ) : ℝ :=
   - ∑' k : ℤ, p k * log2 (p k)

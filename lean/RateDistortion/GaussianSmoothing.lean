@@ -92,7 +92,36 @@ theorem rdGap_bits_via_fisherBound (f : ℝ → ℝ) (D J_max : ℝ)
   rateDistortionFunctionBits f D - diffEntropyBits f +
       (1/2) * log2 (2 * Real.pi * Real.exp 1 * D)
     ≤ (D / (2 * Real.log 2)) * J_max := by
-  -- TODO: convert the nats bound to bits (algebraic rewrite + monotonicity of 1/log 2)
-  sorry
+  have hNats :=
+    rdGap_bound_via_fisherBound (f := f) (D := D) (J_max := J_max) hD hf hfi hJ
+  have hlog2 : 0 < Real.log 2 := by
+    simpa using Real.log_pos (by norm_num)
+  have hlog2_nonneg : 0 ≤ (1 / Real.log 2) := by
+    have hpos : 0 < (1 / Real.log 2) := by
+      have hpos' : 0 < (Real.log 2)⁻¹ := inv_pos.mpr hlog2
+      simpa [one_div] using hpos'
+    exact le_of_lt hpos
+  have hmul := mul_le_mul_of_nonneg_left hNats hlog2_nonneg
+  have hconv :
+      rateDistortionFunctionBits f D - diffEntropyBits f +
+          (1 / 2) * log2 (2 * Real.pi * Real.exp 1 * D)
+        =
+      (1 / Real.log 2) *
+        (rateDistortionFunctionNats f D - diffEntropyNats f +
+          (1 / 2) * Real.log (2 * Real.pi * Real.exp 1 * D)) := by
+    simp [rateDistortionFunctionBits, diffEntropyBits_eq_div_log2, log2, div_eq_mul_inv,
+      sub_eq_add_neg, mul_add, add_comm, add_left_comm, add_assoc, mul_assoc, mul_left_comm,
+      mul_comm]
+  have hright :
+      (1 / Real.log 2) * ((D / 2) * J_max) = (D / (2 * Real.log 2)) * J_max := by
+    simp [div_eq_mul_inv, mul_assoc, mul_left_comm, mul_comm]
+  calc
+    rateDistortionFunctionBits f D - diffEntropyBits f +
+        (1 / 2) * log2 (2 * Real.pi * Real.exp 1 * D)
+        = (1 / Real.log 2) *
+            (rateDistortionFunctionNats f D - diffEntropyNats f +
+              (1 / 2) * Real.log (2 * Real.pi * Real.exp 1 * D)) := hconv
+    _ ≤ (1 / Real.log 2) * ((D / 2) * J_max) := hmul
+    _ = (D / (2 * Real.log 2)) * J_max := hright
 
 end RateDistortion

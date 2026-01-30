@@ -145,12 +145,44 @@ theorem ggd_rd_gap_bound_bits_unitVar {beta D : ℝ}
     ≤ (D / (2 * Real.log 2)) *
       (beta ^ 2 * (Real.Gamma (3 / beta) * Real.Gamma (2 - 1 / beta) /
         (Real.Gamma (1 / beta) ^ 2))) := by
-  simp [rdGap, rdGapBits, shannonLowerBound]
   -- This follows from:
   -- 1. ggd_rd_gap_bound_fisher (in nats)
   -- 2. Conversion from nats to bits: divide by ln(2)
   -- 3. Use ggd_fisher_info_unitVar for explicit formula
-  sorry
+  have hbeta_pos : 0 < beta := by
+    linarith
+  have halpha : 0 < alphaUnitVar beta := by
+    have hgamma1 : 0 < Real.Gamma (1 / beta) := by
+      exact Real.Gamma_pos_of_pos (one_div_pos.mpr hbeta_pos)
+    have hgamma3 : 0 < Real.Gamma (3 / beta) := by
+      have h3 : 0 < (3 / beta) := by
+        exact div_pos (by norm_num) hbeta_pos
+      exact Real.Gamma_pos_of_pos h3
+    have hratio : 0 < Real.Gamma (1 / beta) / Real.Gamma (3 / beta) := by
+      exact div_pos hgamma1 hgamma3
+    have hsqrt : 0 < Real.sqrt (Real.Gamma (1 / beta) / Real.Gamma (3 / beta)) := by
+      exact Real.sqrt_pos.2 hratio
+    simpa [alphaUnitVar] using hsqrt
+  have hden : IsDensity (ggdDensity beta (alphaUnitVar beta)) :=
+    ggd_isDensity hbeta_pos halpha
+  have hfi : HasFiniteFisherInfo (ggdDensity beta (alphaUnitVar beta)) :=
+    ggd_hasFiniteFisherInfo hbeta halpha
+  have hJ :
+      ∀ s, 0 ≤ s → s ≤ D →
+        fisherInfo (gaussConv (ggdDensity beta (alphaUnitVar beta)) s)
+          ≤ ggdFisherInfo beta (alphaUnitVar beta) := by
+    intro s hs0 hsD
+    exact ggd_fisherInfo_max_at_zero (beta := beta) (alpha := alphaUnitVar beta)
+      hbeta halpha s hs0
+  have hbits :=
+    rdGap_bits_via_fisherBound (f := ggdDensity beta (alphaUnitVar beta)) (D := D)
+      (J_max := ggdFisherInfo beta (alphaUnitVar beta)) hD hden hfi hJ
+  have hbits' :
+      rdGap (ggdDensity beta (alphaUnitVar beta)) D
+        ≤ (D / (2 * Real.log 2)) * ggdFisherInfo beta (alphaUnitVar beta) := by
+    simpa [rdGap, rdGapBits, shannonLowerBound, sub_eq_add_neg, add_comm, add_left_comm,
+      add_assoc] using hbits
+  simpa [ggd_fisher_info_unitVar (beta := beta) hbeta] using hbits'
 
 /-!
 ## Numerical bounds for the 4-bit regime
