@@ -267,10 +267,12 @@ Formalizable contributions that don't require GPU clusters:
 ### Formalization (Lean 4)
 - [x] Formalize GGD density, normalization, moments (proved)
 - [x] Prove main RD gap bound via Gaussian test channel + de Bruijn + Fisher info (proved, modulo axioms)
+- [x] Prove GGD log-concavity for β ≥ 1 (proved)
+- [x] Formalize GGD entropy formula in nats and bits (proved)
+- [x] Prove base integration lemmas — promoted from axioms to theorems
 - [ ] Complete nats-to-bits conversion for explicit bound in bits
 - [ ] Prove GGD Fisher information closed form
 - [ ] Prove log-form bound (Goal A: gap ≤ ½ log₂(1 + D·J))
-- [ ] Formalize GGD entropy formula
 
 ### Extensions
 - [ ] Hardware-constrained R(D) with per-group scaling

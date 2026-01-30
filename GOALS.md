@@ -74,23 +74,27 @@ For the **log form** (Goal A), use J(X_t) ≤ J(X)/(1 + t·J(X)) instead of J(X_
 - `ggd_fisherInfo_max_at_zero`: Fisher info of smoothed GGD ≤ ggdFisherInfo (via decreasing + gaussConv_zero)
 - `ggd_rd_gap_bound_fisher`: **Main theorem** — gap ≤ (D/2)·J for GGD (in nats)
 
-**GGD integration lemmas:**
-- `ggdDensity_integrable`: GGD density is integrable (scaling + integrable_exp_abs_beta axiom)
-- `ggd_integral_eq_one`: Normalization ∫f=1 (change of variables + integral_exp_abs_beta axiom)
+**GGD integration lemmas (all proved, including base integrals formerly axiomatized):**
+- `integral_exp_abs_beta`: ∫ exp(-|x|^β) dx = (2/β)Γ(1/β) — **proved** (was axiom)
+- `integral_power_exp_abs_beta`: ∫ |x|^p exp(-|x|^β) dx = (2/β)Γ((p+1)/β) — **proved** (was axiom)
+- `ggdDensity_integrable`: GGD density is integrable
+- `ggd_integral_eq_one`: Normalization ∫f=1
 - `ggd_abs_moment_integral`: E[|X|^p] = α^p · Γ((p+1)/β) / Γ(1/β)
-- `ggd_second_moment`: E[X²] = α² · Γ(3/β) / Γ(1/β) (from ggd_abs_moment_integral with p=2)
+- `ggd_second_moment`: E[X²] = α² · Γ(3/β) / Γ(1/β)
+
+**GGD structural properties (proved):**
+- `ggd_logconcave`: GGD is log-concave for β ≥ 1 — **proved** (was partial)
+- `ggd_entropy_nats`: GGD differential entropy in nats — **proved** (was sorry)
+- `ggd_entropy_bits`: GGD differential entropy in bits — **proved** (was sorry)
 
 **Other:**
 - `fisherInfo_gaussConv_zero`: At t=0, `fisherInfo (gaussConv f 0) = fisherInfo f`
 - `ggd_fisher_unitVar_beta_1_7_bound`: `ggdFisherInfo 1.7 (alphaUnitVar 1.7) ≤ 2`
 
 ### Partially proved (some sorry remains)
-- `ggd_logconcave`: Triangle inequality done, convexity of `z ↦ z^β` and final combination remain
 - `ggd_fisher_unitVar_bounds`: Structure done, two sub-goals remain (Cramér-Rao lower, monotonicity upper)
 
 ### Sorry with documented proof strategy
-- `ggd_entropy_nats`: Expand integral, use normalization + moment formula
-- `ggd_entropy_bits`: Convert from nats via `/ ln 2`
 - `rdGap_bits_via_fisherBound`: Convert nats bound to bits (algebraic rewrite)
 - `ggd_rd_gap_bound_bits_unitVar`: Combine ggd_rd_gap_bound_fisher + nats-to-bits + Fisher formula
 - `ggd_rd_gap_4bit_regime`: Numerical specialization for β=1.7, D=0.01
@@ -125,10 +129,11 @@ For the **log form** (Goal A), use J(X_t) ≤ J(X)/(1 + t·J(X)) instead of J(X_
 - `fisherInfo_eq_of_hasFiniteFisherInfo`: compute via score function
 
 ### GGD-specific axioms
-- `integrable_exp_abs_beta`, `integrable_power_exp_abs_beta`: integrability
+- `ggdFisherInfo_eq_fisherInfo`: connects GGD-specific to abstract Fisher info
+
+### GGD integration (formerly axioms, now proved theorems in Moments.lean)
 - `integral_exp_abs_beta`: ∫ exp(-|x|^β) dx = (2/β)Γ(1/β)
 - `integral_power_exp_abs_beta`: ∫ |x|^p exp(-|x|^β) dx = (2/β)Γ((p+1)/β)
-- `ggdFisherInfo_eq_fisherInfo`: connects GGD-specific to abstract Fisher info
 
 ### Quantization axioms (ECSQ path, not currently active)
 - `ditherIndex`, `ditherRecon`: dithered quantizer stubs
@@ -162,13 +167,16 @@ For bits conversion (remaining work):
     │       └── ggd_fisher_info_formula ✗ sorry
     └── ggd_rd_gap_bound_bits_unitVar ✗ sorry
 
-For GGD-specific numerics (integration done):
+For GGD-specific numerics (all proved):
     │
     ├── ggd_abs_moment_integral ✅ PROVED
-    │       └── integral_power_exp_abs_beta [axiom]
+    │       └── integral_power_exp_abs_beta ✅ PROVED (was axiom)
     ├── ggd_integral_eq_one ✅ PROVED
-    │       └── integral_exp_abs_beta [axiom]
-    └── ggd_second_moment ✅ PROVED
+    │       └── integral_exp_abs_beta ✅ PROVED (was axiom)
+    ├── ggd_second_moment ✅ PROVED
+    ├── ggd_logconcave ✅ PROVED
+    ├── ggd_entropy_nats ✅ PROVED
+    └── ggd_entropy_bits ✅ PROVED
 
 For Goal A (log form):
     └── ggd_rd_gap_bound_log ✗ sorry
@@ -183,11 +191,11 @@ Pure algebraic rewrite: divide the nats bound by ln(2). This unlocks `ggd_rd_gap
 ### 2. Complete Fisher info closed forms (`ggd_fisher_info_formula`, `ggd_fisher_info_unitVar`)
 These use `ggd_abs_moment_integral` (now proved) with p = 2β−2. Needed for explicit numerical bounds.
 
-### 3. Finish `ggd_logconcave`
-Two sorries remain: convexity of `z ↦ z^β` on `[0,∞)` for `β ≥ 1`, and combining with triangle inequality.
+### 3. ~~Finish `ggd_logconcave`~~ DONE
+~~Two sorries remain.~~ Fully proved.
 
-### 4. Complete `ggd_entropy_nats`
-Uses `ggd_integral_eq_one` and `ggd_abs_moment_integral` (both proved). Requires integral manipulation with log.
+### 4. ~~Complete `ggd_entropy_nats`~~ DONE
+~~Requires integral manipulation with log.~~ Fully proved (along with `ggd_entropy_bits`).
 
 ### 5. Goal A: `ggd_rd_gap_bound_log`
 Requires adding an axiom for the sharper Fisher info bound J(X_t) ≤ J(X)/(1+t·J(X)), then integrating.
@@ -196,7 +204,13 @@ Requires adding an axiom for the sharper Fisher info bound J(X_t) ≤ J(X)/(1+t�
 
 **Goal B (linear form, in nats): ACHIEVED.** The proof chain for `ggd_rd_gap_bound_fisher` is complete, reducing to axioms in `Axioms.lean` only.
 
+**Additionally proved:**
+- GGD log-concavity (`ggd_logconcave`) for β ≥ 1
+- GGD entropy formulas in nats and bits (`ggd_entropy_nats`, `ggd_entropy_bits`)
+- Base integration lemmas (`integral_exp_abs_beta`, `integral_power_exp_abs_beta`) — formerly axioms, now theorems
+
 **Remaining for full result:**
 1. Nats-to-bits conversion for the explicit bound in bits with closed-form Fisher info
-2. Goal A (log form) for the tighter bound
-3. Numerical specialization for β=1.7, D=0.01
+2. Fisher info closed forms (`ggd_fisher_info_formula`, `ggd_fisher_info_unitVar`)
+3. Goal A (log form) for the tighter bound
+4. Numerical specialization for β=1.7, D=0.01
