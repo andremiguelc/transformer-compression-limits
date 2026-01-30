@@ -1,5 +1,5 @@
 import RateDistortion.Basic
-import RateDistortion.Axioms
+import RateDistortion.Axioms.Quantization
 
 open scoped BigOperators
 

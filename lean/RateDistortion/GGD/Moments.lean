@@ -1,5 +1,6 @@
 import Mathlib
-import RateDistortion.Axioms
+import RateDistortion.Basic
+import RateDistortion.Axioms.GGDIntegrals
 import RateDistortion.GGD.Basic
 
 open scoped BigOperators

@@ -1,6 +1,7 @@
 import Mathlib
 import RateDistortion.Basic
-import RateDistortion.Axioms
+import RateDistortion.Axioms.GaussianSmoothing
+import RateDistortion.Axioms.GGD
 import RateDistortion.RateDistortion
 import RateDistortion.GGD
 import RateDistortion.GaussianSmoothing

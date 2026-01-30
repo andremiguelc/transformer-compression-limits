@@ -1,6 +1,6 @@
 import Mathlib
 import RateDistortion.Basic
-import RateDistortion.Axioms
+import RateDistortion.Axioms.GaussianSmoothing
 
 open scoped BigOperators
 open MeasureTheory
@@ -12,7 +12,7 @@ namespace RateDistortion
 # Gaussian Smoothing and de Bruijn Identity
 
 This file contains the main theorems using the Gaussian smoothing axioms
-collected in `RateDistortion.Axioms`.
+collected in `RateDistortion.Axioms.GaussianSmoothing`.
 -/
 
 /--
