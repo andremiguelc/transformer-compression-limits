@@ -1,6 +1,7 @@
 import Mathlib
 import RateDistortion.Basic
 import RateDistortion.Axioms.GaussianSmoothing
+import RateDistortion.Axioms.Stam
 import RateDistortion.Axioms.GGD
 import RateDistortion.RateDistortion
 import RateDistortion.GGD
@@ -78,8 +79,17 @@ theorem ggd_fisherInfo_max_at_zero {beta alpha : ℝ} (hbeta : 1 < beta) (halpha
     ggd_isDensity (by linarith : 0 < beta) halpha
   have hfi : HasFiniteFisherInfo (ggdDensity beta alpha) :=
     ggd_hasFiniteFisherInfo hbeta halpha
-  have hdec :=
-    fisherInfo_gaussConv_decreasing (ggdDensity beta alpha) 0 t (by linarith) ht hden hfi
+  have hstam :=
+    fisherInfo_gaussConv_stam (ggdDensity beta alpha) t ht hden hfi
+  have hle :
+      fisherInfo (ggdDensity beta alpha) /
+        (1 + t * fisherInfo (ggdDensity beta alpha))
+        ≤ fisherInfo (ggdDensity beta alpha) := by
+    have hnonneg : 0 ≤ fisherInfo (ggdDensity beta alpha) :=
+      fisherInfo_nonneg (ggdDensity beta alpha)
+    have hdenom : 1 ≤ 1 + t * fisherInfo (ggdDensity beta alpha) := by
+      nlinarith [hnonneg, ht]
+    exact div_le_self hnonneg hdenom
   -- rewrite gaussConv at 0 and connect to ggdFisherInfo
   have h0 : fisherInfo (gaussConv (ggdDensity beta alpha) 0) =
       ggdFisherInfo beta alpha := by
@@ -88,7 +98,9 @@ theorem ggd_fisherInfo_max_at_zero {beta alpha : ℝ} (hbeta : 1 < beta) (halpha
     simpa [gaussConv_zero] using hggd.symm
   calc
     fisherInfo (gaussConv (ggdDensity beta alpha) t)
-        ≤ fisherInfo (gaussConv (ggdDensity beta alpha) 0) := hdec
+        ≤ fisherInfo (ggdDensity beta alpha) /
+            (1 + t * fisherInfo (ggdDensity beta alpha)) := hstam
+    _ ≤ fisherInfo (ggdDensity beta alpha) := hle
     _ = ggdFisherInfo beta alpha := h0
 
 /-!

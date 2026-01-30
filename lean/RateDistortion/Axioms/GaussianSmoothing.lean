@@ -82,11 +82,6 @@ axiom gaussianTestChannel_achievable (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D)
     (hf : IsDensity f) :
   rateDistortionFunctionNats f D ≤ gaussianTestChannelRate f D
 
-/-- Fisher information decreases under Gaussian convolution. -/
-axiom fisherInfo_gaussConv_decreasing (f : ℝ → ℝ) (s t : ℝ) (hs : 0 ≤ s) (hst : s ≤ t)
-    (hf : IsDensity f) (hfi : HasFiniteFisherInfo f) :
-  fisherInfo (gaussConv f t) ≤ fisherInfo (gaussConv f s)
-
 /-- Fisher information along Gaussian smoothing is interval-integrable on [0, D]. -/
 axiom fisherInfo_gaussConv_intervalIntegrable (f : ℝ → ℝ) (D : ℝ)
     (hf : IsDensity f) (hfi : HasFiniteFisherInfo f) :

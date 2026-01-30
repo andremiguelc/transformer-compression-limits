@@ -1,6 +1,5 @@
 import Mathlib
 import RateDistortion.Basic
-import RateDistortion.Axioms.GGDIntegrals
 import RateDistortion.GGD.Basic
 
 open scoped BigOperators
@@ -13,30 +12,48 @@ namespace RateDistortion
 ## Helper lemmas for GGD integration
 
 The key to proving normalization and moments is the change of variables u = (|x|/α)^β.
-This transforms the integral into a form involving the Gamma function.
+This transforms the integral into a form involving the Gamma function, using Mathlib's
+Gamma-integral lemmas on `(0, ∞)` plus symmetry.
 -/
 
-/-- The GGD density is integrable. -/
-theorem ggdDensity_integrable {beta alpha : ℝ} (hbeta : 0 < beta) (halpha : 0 < alpha) :
-  Integrable (ggdDensity beta alpha) volume := by
-  -- Follows from integrable_exp_abs_beta and scaling
-  have h0 : Integrable (fun x => Real.exp (-|x| ^ beta)) volume :=
-    integrable_exp_abs_beta beta hbeta
-  have h1' :
-      Integrable (fun x => Real.exp (-|x / alpha| ^ beta)) volume := by
-    -- Use scaling: x ↦ x / alpha
-    have h :=
-      (MeasureTheory.Integrable.comp_div (g := fun x => Real.exp (-|x| ^ beta)) h0
-        (by exact ne_of_gt halpha))
-    simpa using h
-  have h1 :
-      Integrable (fun x => Real.exp (-(|x| / alpha) ^ beta)) volume := by
-    simpa [abs_div, abs_of_nonneg (le_of_lt halpha)] using h1'
-  -- Pull out the constant ggdC
-  have h2 := h1.const_mul (ggdC beta alpha)
-  -- unfold the definition to match the integrand
-  unfold ggdDensity
-  simpa using h2
+/-- Integral of exp(-|x|^β) over ℝ. -/
+theorem integral_exp_abs_beta {beta : ℝ} (hbeta : 0 < beta) :
+  (∫ x : ℝ, Real.exp (- |x| ^ beta)) = (2 / beta) * Real.Gamma (1 / beta) := by
+  have hIoi :
+      (∫ x in Set.Ioi (0:ℝ), Real.exp (- x ^ beta)) =
+        Real.Gamma (1 / beta + 1) := by
+    simpa using (integral_exp_neg_rpow (p := beta) hbeta)
+  calc
+    (∫ x : ℝ, Real.exp (- |x| ^ beta))
+        = 2 * ∫ x in Set.Ioi (0:ℝ), Real.exp (- x ^ beta) := by
+          simpa using
+            (integral_comp_abs (f := fun x => Real.exp (- x ^ beta)))
+    _ = 2 * Real.Gamma (1 / beta + 1) := by simp [hIoi]
+    _ = (2 / beta) * Real.Gamma (1 / beta) := by
+          calc
+            2 * Real.Gamma (1 / beta + 1)
+                = 2 * ((1 / beta) * Real.Gamma (1 / beta)) := by
+                    simp [one_div,
+                      Real.Gamma_add_one (s := beta⁻¹) (inv_ne_zero (ne_of_gt hbeta))]
+            _ = (2 / beta) * Real.Gamma (1 / beta) := by ring
+
+/-- Integral of |x|^p exp(-|x|^β) over ℝ. -/
+theorem integral_power_exp_abs_beta
+  {beta p : ℝ} (hbeta : 0 < beta) (hp : -1 < p) :
+  (∫ x : ℝ, |x| ^ p * Real.exp (- |x| ^ beta)) =
+    (2 / beta) * Real.Gamma ((p + 1) / beta) := by
+  have hIoi :
+      (∫ x in Set.Ioi (0:ℝ), x ^ p * Real.exp (- x ^ beta)) =
+        (1 / beta) * Real.Gamma ((p + 1) / beta) := by
+    simpa using (integral_rpow_mul_exp_neg_rpow (p := beta) (q := p) hbeta hp)
+  calc
+    (∫ x : ℝ, |x| ^ p * Real.exp (- |x| ^ beta))
+        = 2 * ∫ x in Set.Ioi (0:ℝ), x ^ p * Real.exp (- x ^ beta) := by
+          simpa using
+            (integral_comp_abs
+              (f := fun x => x ^ p * Real.exp (- x ^ beta)))
+    _ = 2 * ((1 / beta) * Real.Gamma ((p + 1) / beta)) := by simp [hIoi]
+    _ = (2 / beta) * Real.Gamma ((p + 1) / beta) := by ring
 
 /-- The GGD density is nonnegative. -/
 theorem ggdDensity_nonneg {beta alpha : ℝ} (hbeta : 0 < beta) (halpha : 0 < alpha) :
@@ -83,7 +100,7 @@ theorem ggd_integral_eq_one {beta alpha : ℝ} (hbeta : 0 < beta) (halpha : 0 < 
   have hbase :
       (∫ x : ℝ, Real.exp (-|x| ^ beta)) =
         (2 / beta) * Real.Gamma (1 / beta) :=
-    integral_exp_abs_beta beta hbeta
+    integral_exp_abs_beta hbeta
   calc
     (∫ x : ℝ, beta / (2 * alpha * Real.Gamma (1 / beta)) *
         Real.exp (-(|x| / alpha) ^ beta))
@@ -102,6 +119,12 @@ theorem ggd_integral_eq_one {beta alpha : ℝ} (hbeta : 0 < beta) (halpha : 0 < 
           simp [hbase]
     _ = 1 := by
           field_simp [hbeta0, halpha0, hGamma0]
+
+/-- The GGD density is integrable. -/
+theorem ggdDensity_integrable {beta alpha : ℝ} (hbeta : 0 < beta) (halpha : 0 < alpha) :
+  Integrable (ggdDensity beta alpha) volume := by
+  have h := ggd_integral_eq_one hbeta halpha
+  exact MeasureTheory.integrable_of_integral_eq_one (μ := volume) h
 
 /-- The GGD density is a probability density. -/
 theorem ggd_isDensity {beta alpha : ℝ} (hbeta : 0 < beta) (halpha : 0 < alpha) :
@@ -209,7 +232,7 @@ theorem ggd_abs_moment_integral
   have hbase :
       (∫ x : ℝ, (|x|) ^ p * Real.exp (-|x| ^ beta)) =
         (2 / beta) * Real.Gamma ((p + 1) / beta) :=
-    integral_power_exp_abs_beta beta p hbeta hp
+    integral_power_exp_abs_beta hbeta hp
   calc
     (∫ x : ℝ, (|x|) ^ p * (beta / (2 * alpha * Real.Gamma (1 / beta)) *
         Real.exp (-(|x| / alpha) ^ beta)))

@@ -1,7 +1,7 @@
 import RateDistortion.Basic
 import RateDistortion.Axioms.RateDistortion
 import RateDistortion.Axioms.GaussianSmoothing
-import RateDistortion.Axioms.GGDIntegrals
+import RateDistortion.Axioms.Stam
 import RateDistortion.Axioms.GGD
 import RateDistortion.Axioms.Quantization
 import RateDistortion.RateDistortion
