@@ -12,24 +12,8 @@ section GaussianSmoothing
 /-- Gaussian convolution operator. -/
 axiom gaussConv (f : ℝ → ℝ) (t : ℝ) : ℝ → ℝ
 
-/-- Gaussian convolution preserves the density property. -/
-axiom gaussConv_isDensity (f : ℝ → ℝ) (hf : IsDensity f) (t : ℝ) (ht : 0 ≤ t) :
-  IsDensity (gaussConv f t)
-
 /-- At t=0, Gaussian convolution is the identity. -/
 axiom gaussConv_zero (f : ℝ → ℝ) : gaussConv f 0 = f
-
-/-- Gaussian convolution is additive in the smoothing parameter. -/
-axiom gaussConv_add (f : ℝ → ℝ) (s t : ℝ) (hs : 0 ≤ s) (ht : 0 ≤ t) :
-  gaussConv (gaussConv f s) t = gaussConv f (s + t)
-
-/-- Differential entropy is non-decreasing under Gaussian smoothing. -/
-axiom diffEntropy_gaussConv_mono (f : ℝ → ℝ) (s t : ℝ) (hs : 0 ≤ s) (ht : s ≤ t) :
-  diffEntropyNats (gaussConv f s) ≤ diffEntropyNats (gaussConv f t)
-
-/-- Entropy under Gaussian smoothing is differentiable for t > 0. -/
-axiom diffEntropy_gaussConv_differentiable (f : ℝ → ℝ) (t : ℝ) (ht : 0 < t) :
-  DifferentiableAt ℝ (fun s => diffEntropyNats (gaussConv f s)) t
 
 /-- Fisher information functional for a density f. -/
 axiom fisherInfo (f : ℝ → ℝ) : ℝ
@@ -55,17 +39,6 @@ axiom deBruijn (f : ℝ → ℝ) (t : ℝ) (ht : 0 < t) (hf : IsDensity f)
     (hfi : HasFiniteFisherInfo f) :
   deriv (fun s => diffEntropyNats (gaussConv f s)) t =
     (1 / 2) * fisherInfo (gaussConv f t)
-
-/-- Integrated de Bruijn: h(X_t) - h(X) = (1/2) ∫₀ᵗ J(X_s) ds. -/
-axiom deBruijn_integrated (f : ℝ → ℝ) (t : ℝ) (ht : 0 < t) (hf : IsDensity f)
-    (hfi : HasFiniteFisherInfo f) :
-  diffEntropyNats (gaussConv f t) - diffEntropyNats f =
-    (1 / 2) * ∫ s in (0:ℝ)..t, fisherInfo (gaussConv f s)
-
-/-- Fisher information is right-continuous at t = 0 for regular densities. -/
-axiom fisherInfo_gaussConv_rightContinuous (f : ℝ → ℝ) (hf : HasFiniteFisherInfo f) :
-  Filter.Tendsto (fun t => fisherInfo (gaussConv f t)) (nhdsWithin 0 (Set.Ici 0))
-    (nhds (fisherInfo f))
 
 /-- Integrated de Bruijn starting from t = 0 for regular densities. -/
 axiom deBruijn_integrated_from_zero (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D)
