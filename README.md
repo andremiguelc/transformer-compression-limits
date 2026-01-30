@@ -270,8 +270,8 @@ Formalizable contributions that don't require GPU clusters:
 - [x] Prove GGD log-concavity for β ≥ 1 (proved)
 - [x] Formalize GGD entropy formula in nats and bits (proved)
 - [x] Prove base integration lemmas — promoted from axioms to theorems
-- [ ] Complete nats-to-bits conversion for explicit bound in bits
-- [ ] Prove GGD Fisher information closed form
+- [x] Complete nats-to-bits conversion for explicit bound in bits
+- [x] Prove GGD Fisher information closed form
 - [ ] Prove log-form bound (Goal A: gap ≤ ½ log₂(1 + D·J))
 
 ### Extensions

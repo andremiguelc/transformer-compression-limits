@@ -51,12 +51,16 @@ For the **log form** (Goal A), use J(X_t) ≤ J(X)/(1 + t·J(X)) instead of J(X_
 | File | Contents |
 |------|----------|
 | `Basic.lean` | `log2`, `diffEntropyBits/Nats`, `shannonLowerBound`, `shannonLowerBoundNats`, `IsLogConcave`, `HasFiniteFisherInfo` |
-| `Axioms.lean` | All axioms: deBruijn, gaussConv, fisherInfo, test channel, GGD integration |
+| `Axioms.lean` | Re-exports axiom submodules (convenience import) |
+| `Axioms/GaussianSmoothing.lean` | Gaussian smoothing axioms: gaussConv, fisherInfo, deBruijn, test channel |
+| `Axioms/RateDistortion.lean` | R(D) axioms: definition, properties, Gaussian case |
+| `Axioms/Quantization.lean` | ECSQ/dithered quantization axioms |
+| `Axioms/Stam.lean` | Stam's inequality for Gaussian smoothing |
 | `RateDistortion.lean` | `rateDistortionFunctionNats`, `rateDistortionFunctionBits`, `rdGapNats`, `rdGapBits` |
 | `GGD/Basic.lean` | `ggdDensity`, `ggdC`, `alphaUnitVar` |
 | `GGD/Moments.lean` | `ggd_integral_eq_one`, `ggd_abs_moment_integral`, `ggd_second_moment` |
 | `GGD/Entropy.lean` | `ggdEntropyNats/Bits`, `ggd_entropy_nats/bits` |
-| `GGD/FisherInfo.lean` | `ggdScore`, `ggdFisherInfo`, `ggd_fisher_info_formula/unitVar` |
+| `GGD/FisherInfo.lean` | `ggdScore`, `ggdFisherInfo`, `ggd_hasFiniteFisherInfo`, `ggd_fisher_info_formula/unitVar`, `ggdFisherInfo_eq_fisherInfo` — all proved |
 | `GGD/LogConcave.lean` | `ggd_logconcave` |
 | `GaussianSmoothing.lean` | `rdGap_via_deBruijn`, `rdGap_bound_via_fisherBound` |
 | `GGDRDBound.lean` | Main theorems: `ggd_rd_gap_bound_fisher`, `ggd_rd_gap_bound_log` |
@@ -87,22 +91,27 @@ For the **log form** (Goal A), use J(X_t) ≤ J(X)/(1 + t·J(X)) instead of J(X_
 - `ggd_entropy_nats`: GGD differential entropy in nats — **proved** (was sorry)
 - `ggd_entropy_bits`: GGD differential entropy in bits — **proved** (was sorry)
 
-**Other:**
+**Fisher information (all proved):**
+- `ggd_hasFiniteFisherInfo`: GGD has finite Fisher info for β > 1
+- `ggd_fisher_info_formula`: Closed-form Fisher info for general scale
+- `ggd_fisher_info_unitVar`: Fisher info for unit-variance case
+- `ggdFisherInfo_eq_fisherInfo`: Connects GGD-specific to abstract Fisher info
+
+**Gaussian smoothing helpers (proved):**
 - `fisherInfo_gaussConv_zero`: At t=0, `fisherInfo (gaussConv f 0) = fisherInfo f`
-- `ggd_fisher_unitVar_beta_1_7_bound`: `ggdFisherInfo 1.7 (alphaUnitVar 1.7) ≤ 2`
+- `rdGap_bits_via_fisherBound`: Convert nats bound to bits
+- `ggd_rd_gap_bound_bits_unitVar`: Explicit bound in bits for unit-variance case
+
+**Numerical bounds:**
+- `ggd_fisher_unitVar_beta_1_7_bound`: `ggdFisherInfo 1.7 (alphaUnitVar 1.7) ≤ 2` — proved (uses ggd_fisher_unitVar_bounds)
 
 ### Partially proved (some sorry remains)
 - `ggd_fisher_unitVar_bounds`: Structure done, two sub-goals remain (Cramér-Rao lower, monotonicity upper)
 
 ### Sorry with documented proof strategy
-- `rdGap_bits_via_fisherBound`: Convert nats bound to bits (algebraic rewrite)
-- `ggd_rd_gap_bound_bits_unitVar`: Combine ggd_rd_gap_bound_fisher + nats-to-bits + Fisher formula
 - `ggd_rd_gap_4bit_regime`: Numerical specialization for β=1.7, D=0.01
 
 ### Sorry with no proof progress yet
-- `ggd_hasFiniteFisherInfo`
-- `ggd_fisher_info_formula`
-- `ggd_fisher_info_unitVar`
 - `ggd_rd_gap_bound_log` (Goal A — requires J(X_t) ≤ J(X)/(1+t·J(X)) bound)
 - `ggd_rd_gap_bound` (original parametric bound)
 
@@ -127,9 +136,6 @@ For the **log form** (Goal A), use J(X_t) ≤ J(X)/(1 + t·J(X)) instead of J(X_
 - `fisherInfo_nonneg`, `fisherInfo_gaussian`, `fisherInfo_scale`
 - `fisherInfo_gaussConv_decreasing`: J(X_t) is non-increasing in t
 - `fisherInfo_eq_of_hasFiniteFisherInfo`: compute via score function
-
-### GGD-specific axioms
-- `ggdFisherInfo_eq_fisherInfo`: connects GGD-specific to abstract Fisher info
 
 ### GGD integration (formerly axioms, now proved theorems in Moments.lean)
 - `integral_exp_abs_beta`: ∫ exp(-|x|^β) dx = (2/β)Γ(1/β)
@@ -160,12 +166,12 @@ Main Target: ggd_rd_gap_bound_fisher ✅ PROVED
             ├── gaussConv_zero [axiom]
             └── ggdFisherInfo_eq_fisherInfo [axiom]
 
-For bits conversion (remaining work):
+For bits conversion (complete):
     │
-    ├── rdGap_bits_via_fisherBound ✗ sorry [nats-to-bits algebra]
-    ├── ggd_fisher_info_unitVar ✗ sorry
-    │       └── ggd_fisher_info_formula ✗ sorry
-    └── ggd_rd_gap_bound_bits_unitVar ✗ sorry
+    ├── rdGap_bits_via_fisherBound ✅ PROVED [GaussianSmoothing.lean]
+    ├── ggd_fisher_info_unitVar ✅ PROVED [GGD/FisherInfo.lean]
+    │       └── ggd_fisher_info_formula ✅ PROVED [GGD/FisherInfo.lean]
+    └── ggd_rd_gap_bound_bits_unitVar ✅ PROVED [GGDRDBound.lean]
 
 For GGD-specific numerics (all proved):
     │
@@ -185,16 +191,16 @@ For Goal A (log form):
 
 ## Next Priority Actions
 
-### 1. Complete nats-to-bits conversion (`rdGap_bits_via_fisherBound`)
-Pure algebraic rewrite: divide the nats bound by ln(2). This unlocks `ggd_rd_gap_bound_bits_unitVar`.
+### ~~1. Complete nats-to-bits conversion (`rdGap_bits_via_fisherBound`)~~ DONE
+~~Pure algebraic rewrite: divide the nats bound by ln(2).~~ Fully proved, unlocking `ggd_rd_gap_bound_bits_unitVar`.
 
-### 2. Complete Fisher info closed forms (`ggd_fisher_info_formula`, `ggd_fisher_info_unitVar`)
-These use `ggd_abs_moment_integral` (now proved) with p = 2β−2. Needed for explicit numerical bounds.
+### ~~2. Complete Fisher info closed forms~~ DONE
+~~`ggd_fisher_info_formula`, `ggd_fisher_info_unitVar`.~~ Both fully proved, along with `ggd_hasFiniteFisherInfo`.
 
-### 3. ~~Finish `ggd_logconcave`~~ DONE
+### ~~3. Finish `ggd_logconcave`~~ DONE
 ~~Two sorries remain.~~ Fully proved.
 
-### 4. ~~Complete `ggd_entropy_nats`~~ DONE
+### ~~4. Complete `ggd_entropy_nats`~~ DONE
 ~~Requires integral manipulation with log.~~ Fully proved (along with `ggd_entropy_bits`).
 
 ### 5. Goal A: `ggd_rd_gap_bound_log`
@@ -210,7 +216,8 @@ Requires adding an axiom for the sharper Fisher info bound J(X_t) ≤ J(X)/(1+t�
 - Base integration lemmas (`integral_exp_abs_beta`, `integral_power_exp_abs_beta`) — formerly axioms, now theorems
 
 **Remaining for full result:**
-1. Nats-to-bits conversion for the explicit bound in bits with closed-form Fisher info
-2. Fisher info closed forms (`ggd_fisher_info_formula`, `ggd_fisher_info_unitVar`)
+1. ~~Nats-to-bits conversion~~ DONE
+2. ~~Fisher info closed forms~~ DONE
 3. Goal A (log form) for the tighter bound
 4. Numerical specialization for β=1.7, D=0.01
+5. `ggd_fisher_unitVar_bounds` — Cramér-Rao lower and monotonicity upper sub-goals
