@@ -1,4 +1,3 @@
-import RateDistortion.Axioms.Quantization
 import RateDistortion.Axioms.RateDistortion
 import RateDistortion.Axioms.GaussianSmoothing
 import RateDistortion.Axioms.Stam

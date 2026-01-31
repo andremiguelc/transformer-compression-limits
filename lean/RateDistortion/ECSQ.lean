@@ -1,6 +1,4 @@
 import RateDistortion.Basic
-import RateDistortion.Axioms.Quantization
-
 open scoped BigOperators
 
 noncomputable section
@@ -8,10 +6,6 @@ namespace RateDistortion
 
 /-- Step size from target MSE for subtractive dither. -/
 def stepFromDistortion (D : ℝ) : ℝ := Real.sqrt (12 * D)
-
-/-- Quantization error (stub until index/recon are defined). -/
-def ditherError (x u delta : ℝ) : ℝ :=
-  ditherRecon (ditherIndex x u delta) u delta - x
 
 /-- A tail function for later bookkeeping. -/
 def tailMass (f : ℝ → ℝ) (T : ℝ) : ℝ :=
