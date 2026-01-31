@@ -188,16 +188,17 @@ For beta ≈ 1.7 and D ≈ 0.01 (4-bit distortion), we can compute explicit boun
 -/
 
 /--
-For β ∈ [1, 2], unit-variance GGD has Fisher info J(β) ∈ [1, 2].
+For β ∈ (1, 2], unit-variance GGD has Fisher info J(β) ∈ [1, 2].
 At β = 2 (Gaussian), J = 1 exactly. As β → 1, J → 2.
 -/
-theorem ggd_fisher_unitVar_bounds {beta : ℝ} (hbeta_lo : 1 ≤ beta) (hbeta_hi : beta ≤ 2) :
+theorem ggd_fisher_unitVar_bounds {beta : ℝ} (hbeta_lo : 1 < beta) (hbeta_hi : beta ≤ 2) :
   1 ≤ ggdFisherInfo beta (alphaUnitVar beta) ∧
   ggdFisherInfo beta (alphaUnitVar beta) ≤ 2 := by
   constructor
   · -- Lower bound: J(β) ≥ 1 follows from Cramér-Rao for unit variance
-    -- For any unit-variance distribution, J ≥ 1/σ² = 1
-    sorry
+    -- For any unit-variance distribution, J ≥ 1/σ² = 1.
+    -- Here we use the closed-form monotonicity spine for the unit-variance GGD.
+    exact ggdFisher_unitVar_lower_bound (beta := beta) hbeta_lo hbeta_hi
   · -- Upper bound: J(β) ≤ 2 follows from J being decreasing in β on [1,2]
     -- and J(1) = 2 (Laplacian case)
     sorry
@@ -205,7 +206,7 @@ theorem ggd_fisher_unitVar_bounds {beta : ℝ} (hbeta_lo : 1 ≤ beta) (hbeta_hi
 /-- Specialized bound for β = 1.7. -/
 theorem ggd_fisher_unitVar_beta_1_7_bound :
   ggdFisherInfo 1.7 (alphaUnitVar 1.7) ≤ 2 :=
-  (ggd_fisher_unitVar_bounds (by norm_num : (1:ℝ) ≤ 1.7) (by norm_num : (1.7:ℝ) ≤ 2)).2
+  (ggd_fisher_unitVar_bounds (by norm_num : (1:ℝ) < 1.7) (by norm_num : (1.7:ℝ) ≤ 2)).2
 
 /--
 For the 4-bit regime (D ≈ 0.01), the RD gap is small.
