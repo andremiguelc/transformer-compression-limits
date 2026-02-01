@@ -2,3 +2,7 @@
 .env
 lean/PROGRESS_SUMMARY.md
 lean/RateDistortion.zip
+lean/.lake/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
