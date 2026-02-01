@@ -201,7 +201,19 @@ theorem ggd_fisher_unitVar_bounds {beta : ℝ} (hbeta_lo : 1 < beta) (hbeta_hi :
     exact ggdFisher_unitVar_lower_bound (beta := beta) hbeta_lo hbeta_hi
   · -- Upper bound: J(β) ≤ 2 follows from J being decreasing in β on [1,2]
     -- and J(1) = 2 (Laplacian case)
-    sorry
+    have hbeta1 : (1:ℝ) ≤ beta := by linarith
+    have hmem_beta : beta ∈ Set.Icc (1:ℝ) 2 := ⟨hbeta1, hbeta_hi⟩
+    have hmem_one : (1:ℝ) ∈ Set.Icc (1:ℝ) 2 := by
+      exact ⟨by norm_num, by norm_num⟩
+    have hle : Jclosed beta ≤ Jclosed 1 :=
+      Jclosed_antitone hmem_one hmem_beta hbeta1
+    have hform : ggdFisherInfo beta (alphaUnitVar beta) = Jclosed beta := by
+      simpa [Jclosed] using (ggd_fisher_info_unitVar (beta := beta) hbeta_lo)
+    calc
+      ggdFisherInfo beta (alphaUnitVar beta) = Jclosed beta := hform
+      _ ≤ Jclosed 1 := hle
+      _ = 2 := by
+        simpa using Jclosed_beta_one
 
 /-- Specialized bound for β = 1.7. -/
 theorem ggd_fisher_unitVar_beta_1_7_bound :

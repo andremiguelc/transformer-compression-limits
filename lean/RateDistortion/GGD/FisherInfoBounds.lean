@@ -15,6 +15,7 @@ Monotonicity of the closed-form Fisher information on β ∈ [1, 2].
 
 This is the analytic spine (proved via digamma + integral representation in the writeup).
 We keep it as an axiom for now to avoid re-formalizing the special-function calculus.
+Citation: digamma monotonicity / integral representation for Γ (e.g., DLMF §5.9).
 -/
 axiom Jclosed_antitone :
   AntitoneOn Jclosed (Set.Icc (1:ℝ) 2)
@@ -57,6 +58,34 @@ lemma Jclosed_beta_two : Jclosed (2:ℝ) = 1 := by
 
 lemma ggdFisherUnitVarClosed_beta_two : Jclosed 2 = 1 := by
   simpa using Jclosed_beta_two
+
+/-- Value at β = 1 (Laplacian case). -/
+lemma Jclosed_beta_one : Jclosed (1:ℝ) = 2 := by
+  have hGamma1 : Real.Gamma (1:ℝ) = 1 := by
+    simpa using Real.Gamma_one
+  have hGamma2 : Real.Gamma (2:ℝ) = 1 := by
+    have h := Real.Gamma_add_one (s := (1:ℝ)) (by norm_num)
+    -- h : Real.Gamma (1 + 1) = 1 * Real.Gamma 1
+    simpa [hGamma1] using h
+  have hGamma3 : Real.Gamma (3:ℝ) = 2 := by
+    have h := Real.Gamma_add_one (s := (2:ℝ)) (by norm_num)
+    -- h : Real.Gamma (2 + 1) = 2 * Real.Gamma 2
+    simpa [hGamma2] using h
+  have h2 : (2:ℝ) - 1 = 1 := by norm_num
+  calc
+    Jclosed (1:ℝ) =
+        (1:ℝ)^2 *
+          (Real.Gamma (3 / 1) * Real.Gamma (2 - 1 / 1) /
+            (Real.Gamma (1 / 1) ^ 2)) := by
+      simp [Jclosed]
+    _ =
+        (1:ℝ)^2 *
+          (Real.Gamma 3 * Real.Gamma 1 /
+            (Real.Gamma 1 ^ 2)) := by
+      simp [h2]
+    _ = Real.Gamma 3 := by
+      simp [hGamma1]
+    _ = 2 := hGamma3
 
 lemma ggdFisher_unitVar_lower_bound {beta : ℝ} (hbeta1 : 1 < beta) (hbeta2 : beta ≤ 2) :
   1 ≤ ggdFisherInfo beta (alphaUnitVar beta) := by
