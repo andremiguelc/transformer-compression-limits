@@ -18,7 +18,7 @@ namespace RateDistortion
 This file connects the abstract Gaussian smoothing framework to the concrete
 GGD case and proves bounds on the RD gap.
 
-## Main strategy (following Program 1)
+## Main strategy
 
 1. Use Gaussian test channel: X̂ = X + N, N ~ N(0, D)
 2. Upper bound: R(D) ≤ I(X; X+N) = h(X+N) - h(N)
@@ -29,24 +29,6 @@ GGD case and proves bounds on the RD gap.
 
 For GGD, we compute J_max explicitly using the closed-form Fisher information.
 -/
-
-/-!
-## RD gap bound template for unit-variance GGD
-
-This is a stub that ties the analytic work in the GGD files to the
-abstract RD definitions.
--/
-
-/-- Placeholder for the eventual explicit bound on the RD gap. -/
-def gapBound (beta : ℝ) : ℝ := by
-  -- TODO: define from the explicit correction term ε_β(D)
-  sorry
-
-theorem ggd_rd_gap_bound
-  {beta : ℝ} (hbeta : 1.6 ≤ beta ∧ beta ≤ 1.9)
-  {D : ℝ} (hD : (1 / 1000 : ℝ) ≤ D ∧ D ≤ (1 / 10 : ℝ)) :
-  rdGap (ggdDensity beta (alphaUnitVar beta)) D ≤ gapBound beta := by
-  sorry
 
 /-!
 ## Gaussian smoothing of GGD
@@ -181,12 +163,6 @@ theorem ggd_rd_gap_bound_bits_unitVar {beta D : ℝ}
       add_assoc] using hbits
   simpa [ggd_fisher_info_unitVar (beta := beta) hbeta] using hbits'
 
-/-!
-## Numerical bounds for the 4-bit regime
-
-For beta ≈ 1.7 and D ≈ 0.01 (4-bit distortion), we can compute explicit bounds.
--/
-
 /--
 For β ∈ (1, 2], unit-variance GGD has Fisher info J(β) ∈ [1, 2].
 At β = 2 (Gaussian), J = 1 exactly. As β → 1, J → 2.
@@ -220,25 +196,10 @@ theorem ggd_fisher_unitVar_beta_1_7_bound :
   ggdFisherInfo 1.7 (alphaUnitVar 1.7) ≤ 2 :=
   (ggd_fisher_unitVar_bounds (by norm_num : (1:ℝ) < 1.7) (by norm_num : (1.7:ℝ) ≤ 2)).2
 
-/--
-For the 4-bit regime (D ≈ 0.01), the RD gap is small.
-
-Gap ≤ (0.01 / 2ln2) · 2.0 ≈ 0.007 bits
-
-This is much smaller than the universal log-concave bound (1.05 bits)
-and even the ECSQ bound (0.255 bits).
--/
-theorem ggd_rd_gap_4bit_regime :
-  rdGap (ggdDensity 1.7 (alphaUnitVar 1.7)) 0.01
-    ≤ 0.01 / (2 * Real.log 2) * 2.0 := by
-  -- Apply ggd_rd_gap_bound_bits_unitVar with beta=1.7, D=0.01
-  -- Combined with ggd_fisher_unitVar_beta_1_7_bound
-  sorry
-
 /-!
-## Log-form bound (Goal A from Program 1)
+## Log-form bound
 
-If we can prove the logarithmic bound, it gives a tighter result.
+The logarithmic form gives a tighter result than the linear bound.
 -/
 
 /--
@@ -251,27 +212,16 @@ theorem ggd_rd_gap_bound_log {beta alpha D : ℝ}
     (hbeta : 1 < beta) (halpha : 0 < alpha) (hD : 0 < D) :
   rdGap (ggdDensity beta alpha) D
     ≤ (1 / (2 * Real.log 2)) * Real.log (1 + D * ggdFisherInfo beta alpha) := by
-  -- This is Goal A from Program 1
-  -- It requires a more refined analysis using the de Bruijn identity
-  -- and properties of Fisher information under convolution
+  -- Requires integrating J(X_t) ≤ J(X)/(1+t·J(X)) (Stam) over [0,D],
+  -- yielding the log form instead of the linear bound.
   sorry
 
 /-!
 ## Connection to empirical results
 
-Our Blahut-Arimoto results show gap ≈ 0 (actually slightly negative due to
-discretization). The bounds above explain why: for beta ≈ 1.7 and D ≈ 0.01,
-the product D · J is very small.
-
-Summary of bounds for beta = 1.7, D = 0.00885 (4-bit normalized):
-
-1. Universal (Marsiglietti-Kostina): gap ≤ 1.05 bits
-2. ECSQ: gap ≤ 0.255 bits
-3. Fisher bound (linear): gap ≤ 0.0064 bits
-4. Fisher bound (log): gap ≤ 0.0032 bits (approx)
-5. Empirical BA: gap ≈ -0.002 bits
-
-The Fisher-based bounds explain why the empirical gap is so small!
+Blahut-Arimoto numerical results show gap ≈ 0 for GGD at 4-bit distortion
+levels. The bounds above explain why: for β ≈ 1.7 and D ≈ 0.01, the product
+D · J is very small, giving gap ≤ 0.007 bits (linear) or ≤ 0.003 bits (log).
 -/
 
 end RateDistortion

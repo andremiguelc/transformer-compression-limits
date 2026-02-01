@@ -6,4 +6,3 @@ import RateDistortion.RateDistortion
 import RateDistortion.GGD
 import RateDistortion.GaussianSmoothing
 import RateDistortion.GGDRDBound
-import RateDistortion.ECSQ
