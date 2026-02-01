@@ -6,23 +6,18 @@ Formalized proofs of rate-distortion theory bounds in Lean 4.
 
 - `RateDistortion/` - Rate-distortion bounds for GGD sources
   - `Basic.lean` - Core definitions (log2, entropy, SLB in bits/nats, log-concavity)
-  - `Axioms.lean` - Centralized axioms (de Bruijn, test channel, Fisher info, GGD integrals)
+  - `Axioms/` - Standard information-theoretic results taken as axioms
   - `RateDistortion.lean` - R(D) in nats/bits and RD gap
   - `GaussianSmoothing.lean` - de Bruijn framework: `rdGap_via_deBruijn` and `rdGap_bound_via_fisherBound` (proved)
   - `GGD/` - GGD-specific material, split by topic
     - `Basic.lean` - Density and scale definitions
-    - `Moments.lean` - Normalization, moments, base integrals — all proved (including `integral_exp_abs_beta`, `integral_power_exp_abs_beta`)
-    - `Entropy.lean` - GGD entropy in nats and bits — proved
-    - `FisherInfo.lean` - Score and Fisher information — all proved (finite Fisher info, closed forms, unit-variance)
-    - `LogConcave.lean` - Log-concavity for β ≥ 1 — proved
-  - `GGDRDBound.lean` - Main RD gap bound `ggd_rd_gap_bound_fisher` (proved), bits conversion (proved), log-form (sorry)
-  - `ECSQ.lean` - Optional ECSQ scaffolding
-  - `Entropy.lean` - Deprecated shim
-  - `Quantization.lean` - Deprecated shim
-
-## Status
-
-The main theorem `ggd_rd_gap_bound_fisher` (Goal B in nats) is fully proved, reducing to axioms in `Axioms.lean`. The bits conversion `ggd_rd_gap_bound_bits_unitVar` is also proved. Additionally, GGD Fisher information closed forms, log-concavity, entropy (nats/bits), and all integration lemmas are fully proved. Only 6 sorries remain (Goal A log form, numerical specializations, and two sub-goals in Fisher bounds). See `GOALS.md` in the project root for detailed progress.
+    - `Moments.lean` - Normalization, moments, base integrals (proved)
+    - `Entropy.lean` - GGD entropy in nats and bits (proved)
+    - `FisherInfo.lean` - Score and Fisher information (proved)
+    - `FisherInfoBounds.lean` - Numerical Fisher info bounds (partial)
+    - `LogConcave.lean` - Log-concavity for β ≥ 1 (proved)
+  - `GGDRDBound.lean` - Main RD gap bound `ggd_rd_gap_bound_fisher` (proved), bits conversion (proved), log-form (open)
+  - `ECSQ.lean` - ECSQ scaffolding
 
 ## Building
 
