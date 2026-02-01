@@ -173,8 +173,7 @@ and derive optimal bit allocation as water-filling over G's eigenmodes.
 │   │   │   ├── FisherInfo.lean            #   Fisher information (proved)
 │   │   │   ├── FisherInfoBounds.lean      #   Numerical bounds (partial)
 │   │   │   └── LogConcave.lean            #   Log-concavity for β ≥ 1 (proved)
-│   │   ├── GGDRDBound.lean               # Main theorem (proved)
-│   │   └── ECSQ.lean                     # ECSQ scaffolding
+│   │   └── GGDRDBound.lean               # Main theorem (proved)
 │   └── lakefile.toml                      # Lean build config (Mathlib v4.26.0)
 └── requirements.txt                       # Python dependencies for notebooks
 ```
@@ -216,7 +215,6 @@ Gap = R(D) - R_SLB(D)
 | GGD normalization and moments | Proved |
 | Base integration lemmas | Proved |
 | Log-form bound (gap ≤ ½ log₂(1 + D·J)) | Open |
-| Numerical specialization (β=1.7, D=0.01) | Open |
 
 The proof reduces to axioms for standard information-theoretic results (R(D) definition, de Bruijn identity, Fisher info monotonicity under Gaussian convolution) documented in `lean/RateDistortion/Axioms/`.
 
@@ -327,7 +325,6 @@ pip install -r requirements.txt
 
 ### Formalization
 - [ ] Prove log-form bound (gap ≤ ½ log₂(1 + D·J)) — tighter than current linear bound
-- [ ] Numerical specialization for β = 1.7, D = 0.01
 
 ### Empirical
 - [ ] Complete Blahut-Arimoto analysis across all layer types

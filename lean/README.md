@@ -17,7 +17,6 @@ Formalized proofs of rate-distortion theory bounds in Lean 4.
     - `FisherInfoBounds.lean` - Numerical Fisher info bounds (partial)
     - `LogConcave.lean` - Log-concavity for β ≥ 1 (proved)
   - `GGDRDBound.lean` - Main RD gap bound `ggd_rd_gap_bound_fisher` (proved), bits conversion (proved), log-form (open)
-  - `ECSQ.lean` - ECSQ scaffolding
 
 ## Building
 
