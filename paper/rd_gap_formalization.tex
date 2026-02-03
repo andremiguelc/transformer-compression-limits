@@ -1,0 +1,350 @@
+
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{microtype}
+\usepackage{enumitem}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
+}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\GGD}{\mathrm{GGD}}
+\newcommand{\N}{\mathcal{N}}
+\newcommand{\KL}{\mathrm{D_{KL}}}
+\newcommand{\logtwo}{\log_2}
+\newcommand{\doi}[1]{\href{https://doi.org/#1}{doi:#1}}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}
+\newtheorem{remark}{Remark}
+
+\title{Formal Verification of Rate--Distortion Bounds\\for Generalized Gaussian Sources in Lean~4}
+
+\author{
+Andr\'e M.\ Carvalho\\
+\small \href{https://andremiguel.pt}{andremiguel.pt}
+}
+
+\date{February 2025}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We present a Lean~4 formalization of rate--distortion bounds for generalized Gaussian distributions (GGD) under mean-squared error distortion. Our development provides machine-checked proofs of fundamental GGD properties---including normalization, moment integrals, differential entropy, and Fisher information---and establishes a formal derivation of the gap between the rate--distortion function and Shannon's lower bound via the Gaussian smoothing technique. The formalization cleanly separates measure-theoretic computations (fully proved using Mathlib) from standard information-theoretic identities (recorded as a minimal axiomatic basis). We obtain an explicit closed-form bound on the rate--distortion gap for unit-variance GGD sources parametrized by shape $\beta > 1$. The Lean development is publicly available and provides a foundation for further formalization of lossy source coding theory.
+\end{abstract}
+
+\section{Introduction}
+
+Rate--distortion theory, introduced by Shannon~\cite{shannon1948}, characterizes the fundamental limits of lossy data compression. For a source with distribution $P_X$ and a distortion measure $d(x, \hat{x})$, the rate--distortion function $R(D)$ specifies the minimum number of bits per symbol required to represent the source such that the expected distortion does not exceed $D$. While $R(D)$ admits a variational characterization, closed-form solutions exist only for special cases, notably Gaussian sources under squared-error distortion.
+
+For non-Gaussian sources, a common approach is to bound $R(D)$ relative to the \emph{Shannon lower bound} (SLB), which provides a universal lower bound depending only on the source entropy and the distortion level. The gap $\Delta(D) = R(D) - R_{\mathrm{SLB}}(D)$ quantifies how far a source deviates from the ``Gaussian ideal'' and can be bounded using techniques from estimation theory, particularly through Fisher information and the de Bruijn identity.
+
+\subsection{Contributions}
+
+This work presents a Lean~4 formalization that:
+\begin{enumerate}[leftmargin=*, label=(\roman*)]
+  \item Establishes machine-checked proofs of key analytic properties of the generalized Gaussian distribution, including normalization, absolute moment integrals, variance, differential entropy, and Fisher information.
+  \item Formalizes the Gaussian smoothing framework for bounding the rate--distortion gap, reducing the bound to an integral of Fisher information along the smoothing path.
+  \item Derives an explicit closed-form upper bound on $\Delta(D)$ for unit-variance GGD sources with shape parameter $\beta > 1$.
+  \item Identifies a minimal axiomatic basis consisting of standard information-theoretic identities (test-channel achievability, de Bruijn's identity, Stam's inequality), cleanly separating what is proved from what is assumed.
+\end{enumerate}
+
+\subsection{Related work}
+
+Formal verification of information-theoretic results remains relatively unexplored. Prior work in proof assistants has addressed entropy inequalities~\cite{affeldt2014}, channel capacity bounds, and basic probability theory, but to our knowledge no prior formalization addresses rate--distortion theory or the Gaussian smoothing technique.
+
+The generalized Gaussian distribution has been studied extensively in signal processing and source coding~\cite{dytso2018, cover2006}. The rate--distortion function for GGD sources does not admit a closed form in general, motivating the use of bounds. The Fisher information approach we formalize originates in classical work on entropy power inequalities~\cite{stam1959, dembo1991}.
+
+\section{Preliminaries}
+\label{sec:prelim}
+
+\subsection{Notation}
+
+All rates and entropies are expressed in \emph{bits}. We write $\logtwo(\cdot)$ for base-2 logarithms and $\log(\cdot)$ for natural logarithms; conversions use the factor $1/\log 2$. We work on $\R$ and represent probability distributions by densities $f : \R \to [0, \infty)$ integrating to one.
+
+\subsection{Core definitions}
+
+\begin{definition}[Differential entropy]
+For a density $f$, the differential entropy in bits is
+\[
+h(f) := -\int_{\R} f(x) \logtwo f(x) \, dx.
+\]
+\end{definition}
+
+\begin{definition}[Shannon lower bound]
+For mean-squared error distortion with target level $D > 0$, the Shannon lower bound is
+\[
+R_{\mathrm{SLB}}(D) := h(f) - \frac{1}{2} \logtwo(2\pi e D).
+\]
+\end{definition}
+
+\begin{definition}[Rate--distortion gap]
+The rate--distortion function $R(D)$ gives the minimum achievable rate at distortion $D$. The \emph{rate--distortion gap} is
+\[
+\Delta(D) := R(D) - R_{\mathrm{SLB}}(D).
+\]
+\end{definition}
+
+For Gaussian sources, $\Delta(D) = 0$ for all $D \leq \sigma^2$. For non-Gaussian sources, the gap is strictly positive but can be bounded using Fisher information.
+
+\subsection{Generalized Gaussian distribution}
+
+\begin{definition}[GGD density]
+For shape parameter $\beta > 0$ and scale parameter $\alpha > 0$, the generalized Gaussian density is
+\[
+f_{\beta,\alpha}(x) = \frac{\beta}{2\alpha \, \Gamma(1/\beta)} \exp\!\left( -\left| \frac{x}{\alpha} \right|^\beta \right).
+\]
+\end{definition}
+
+The GGD family includes the Laplace distribution ($\beta = 1$) and the Gaussian distribution ($\beta = 2$) as special cases. For $\beta < 2$, the distribution is leptokurtic (heavier tails than Gaussian); for $\beta > 2$, it is platykurtic.
+
+\section{Formalized GGD properties}
+\label{sec:ggd}
+
+The following results are proved in Lean using Mathlib's integration and special function libraries.
+
+\begin{theorem}[Normalization and moments]
+\label{thm:moments}
+Let $\beta > 0$, $\alpha > 0$, and $p > -1$. Then
+\[
+\int_{\R} f_{\beta,\alpha}(x) \, dx = 1
+\]
+and
+\[
+\int_{\R} |x|^p f_{\beta,\alpha}(x) \, dx = \alpha^p \frac{\Gamma\bigl((p+1)/\beta\bigr)}{\Gamma(1/\beta)}.
+\]
+In particular, the variance is
+\[
+\Var(X) = \alpha^2 \frac{\Gamma(3/\beta)}{\Gamma(1/\beta)}.
+\]
+\end{theorem}
+
+\begin{definition}[Unit-variance scaling]
+Define
+\[
+\alpha_{\mathrm{uv}}(\beta) := \sqrt{\frac{\Gamma(1/\beta)}{\Gamma(3/\beta)}},
+\]
+so that $X \sim \GGD(\beta, \alpha_{\mathrm{uv}}(\beta))$ has unit variance.
+\end{definition}
+
+\begin{theorem}[Differential entropy]
+\label{thm:entropy}
+For $\beta > 0$ and $\alpha > 0$, the differential entropy in bits is
+\[
+h(f_{\beta,\alpha}) = \logtwo\!\left( \frac{2\alpha \, \Gamma(1/\beta)}{\beta} \right) + \frac{1}{\beta \log 2}.
+\]
+\end{theorem}
+
+\begin{theorem}[Fisher information]
+\label{thm:fisher}
+For $\beta > 1$ and $\alpha > 0$, the density $f_{\beta,\alpha}$ has finite Fisher information given by
+\[
+J(f_{\beta,\alpha}) = \frac{\beta^2}{\alpha^2} \cdot \frac{\Gamma(2 - 1/\beta)}{\Gamma(1/\beta)}.
+\]
+For the unit-variance case $\alpha = \alpha_{\mathrm{uv}}(\beta)$:
+\[
+J(\beta) := J(f_{\beta, \alpha_{\mathrm{uv}}(\beta)}) = \beta^2 \cdot \frac{\Gamma(3/\beta) \, \Gamma(2 - 1/\beta)}{\Gamma(1/\beta)^2}.
+\]
+\end{theorem}
+
+\begin{theorem}[Log-concavity]
+\label{thm:logconcave}
+For $\beta \geq 1$, the GGD density $f_{\beta,\alpha}$ is log-concave.
+\end{theorem}
+
+\section{Rate--distortion gap bound}
+\label{sec:main}
+
+\subsection{The Gaussian smoothing framework}
+
+The bound on $\Delta(D)$ follows from the classical Gaussian smoothing technique, which we formalize as a sequence of reductions.
+
+\begin{theorem}[RD gap via Fisher information]
+\label{thm:gap-bound}
+Let $X$ be a random variable with density $f$ having finite Fisher information $J(f)$. For any distortion level $D > 0$:
+\[
+\Delta(D) \leq \frac{D}{2 \log 2} \, J(f).
+\]
+\end{theorem}
+
+The proof proceeds through the following steps, formalized in Lean:
+
+\begin{enumerate}[leftmargin=*, label=\textbf{Step \arabic*:}]
+  \item \textbf{Gaussian test channel.} Consider the reconstruction $\widehat{X} = X + \sqrt{D} Z$ where $Z \sim \N(0,1)$ is independent of $X$. By achievability of the test channel:
+  \[
+  R(D) \leq h(X + \sqrt{D} Z) - h(\sqrt{D} Z).
+  \]
+
+  \item \textbf{Reduction to entropy increment.} Since $h(\sqrt{D} Z) = \frac{1}{2} \logtwo(2\pi e D)$, subtracting the SLB yields:
+  \[
+  \Delta(D) \leq h(X + \sqrt{D} Z) - h(X).
+  \]
+
+  \item \textbf{De Bruijn's identity.} Let $X_t := X + \sqrt{t} Z$ for $t \in [0, D]$. The integrated de Bruijn identity gives:
+  \[
+  h(X_D) - h(X_0) = \frac{1}{2 \log 2} \int_0^D J(X_t) \, dt.
+  \]
+
+  \item \textbf{Fisher information monotonicity.} By Stam's inequality, Fisher information is non-increasing under Gaussian convolution:
+  \[
+  J(X_t) \leq J(X_0) = J(X) \quad \text{for all } t \in [0, D].
+  \]
+
+  \item \textbf{Integration.} Combining the above:
+  \[
+  \Delta(D) \leq \frac{1}{2 \log 2} \int_0^D J(X) \, dt = \frac{D}{2 \log 2} \, J(X). \qedhere
+  \]
+\end{enumerate}
+
+\subsection{Application to GGD sources}
+
+Combining Theorem~\ref{thm:gap-bound} with the Fisher information formula from Theorem~\ref{thm:fisher} yields our main result.
+
+\begin{theorem}[GGD rate--distortion gap bound]
+\label{thm:main}
+Let $X \sim \GGD(\beta, \alpha_{\mathrm{uv}}(\beta))$ with $\beta > 1$ (unit variance). For any $D > 0$:
+\[
+\Delta(D) \leq \frac{D}{2 \log 2} \cdot \beta^2 \cdot \frac{\Gamma(3/\beta) \, \Gamma(2 - 1/\beta)}{\Gamma(1/\beta)^2}.
+\]
+\end{theorem}
+
+\begin{remark}[Tighter logarithmic bound]
+A sharper bound follows from exact integration of the Stam inequality:
+\[
+\Delta(D) \leq \frac{1}{2 \log 2} \log\bigl(1 + D \cdot J(X)\bigr).
+\]
+This refinement is stated but not yet proved in the Lean development.
+\end{remark}
+
+\section{Axiomatic basis}
+\label{sec:axioms}
+
+The formalization treats the following standard results as axioms, cleanly separating analytic computations (proved) from information-theoretic foundations (assumed):
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Rate--distortion function:} Existence of $R(D)$ satisfying standard properties (non-negativity, monotonicity, convexity).
+  \item \textbf{Test-channel achievability:} The inequality $R(D) \leq h(X + \sqrt{D} Z) - h(\sqrt{D} Z)$ for the Gaussian test channel.
+  \item \textbf{Integrated de Bruijn identity:} The entropy increment formula in terms of Fisher information.
+  \item \textbf{Stam's inequality:} Monotonicity of Fisher information under Gaussian convolution.
+\end{itemize}
+
+These results are well-established in the literature~\cite{cover2006, stam1959, dembo1991}. Formalizing them would require substantial measure-theoretic infrastructure for mutual information and conditional distributions, which we leave to future work.
+
+\section{Formalization details}
+\label{sec:lean}
+
+The Lean~4 development is organized as follows:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{RateDistortion/Basic.lean}: Core definitions (differential entropy, SLB, log-concavity, finite Fisher information predicate).
+  \item \texttt{RateDistortion/Axioms/}: Axiomatic information-theoretic facts.
+  \item \texttt{RateDistortion/GaussianSmoothing.lean}: Reduction of RD gap to Fisher information bound.
+  \item \texttt{RateDistortion/GGD/}: GGD-specific results (density, moments, entropy, Fisher information, log-concavity).
+  \item \texttt{RateDistortion/GGDRDBound.lean}: Main theorem combining the framework with GGD formulas.
+\end{itemize}
+
+Table~\ref{tab:index} provides an index of key Lean declarations.
+
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Lean declaration} & \textbf{Location} \\
+\midrule
+\texttt{ggd\_integral\_eq\_one} & \texttt{GGD/Moments.lean} \\
+\texttt{ggd\_abs\_moment\_integral} & \texttt{GGD/Moments.lean} \\
+\texttt{ggd\_second\_moment} & \texttt{GGD/Moments.lean} \\
+\texttt{ggd\_entropy\_bits} & \texttt{GGD/Entropy.lean} \\
+\texttt{ggdFisherInfo\_eq\_fisherInfo} & \texttt{GGD/FisherInfo.lean} \\
+\texttt{ggd\_fisher\_info\_unitVar} & \texttt{GGD/FisherInfo.lean} \\
+\texttt{ggd\_logconcave} & \texttt{GGD/LogConcave.lean} \\
+\texttt{rdGap\_bits\_via\_fisherBound} & \texttt{GaussianSmoothing.lean} \\
+\texttt{ggd\_rd\_gap\_bound\_bits\_unitVar} & \texttt{GGDRDBound.lean} \\
+\texttt{ggd\_rd\_gap\_bound\_fisher} & \texttt{GGDRDBound.lean} \\
+\bottomrule
+\end{tabularx}
+\caption{Index of principal Lean declarations.}
+\label{tab:index}
+\end{table}
+
+\section{Discussion}
+\label{sec:discussion}
+
+The complete Lean~4 development is available at \url{https://github.com/andremiguelc/transformer-compression-limits}.
+
+This formalization demonstrates that substantive rate--distortion bounds can be machine-checked with a modest axiomatic basis. The separation between analytic GGD computations and information-theoretic identities provides a clear interface: the former are fully verified using Mathlib, while the latter constitute a well-defined trusted base.
+
+Several directions for future work present themselves:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Completing the logarithmic bound:} The tighter $\log(1 + DJ)$ form requires careful integration of the exact Stam inequality.
+  \item \textbf{Formalizing the axioms:} De Bruijn's identity and Stam's inequality could be proved from measure-theoretic first principles, though this requires infrastructure for score functions and relative entropy.
+  \item \textbf{Extension to other source families:} The Gaussian smoothing framework applies broadly; formalizing bounds for other distributions (e.g., exponential, uniform) would be natural extensions.
+  \item \textbf{Achievability proofs:} Formalizing the converse---that the RD function is achievable---would complete the picture.
+\end{itemize}
+
+\section*{Acknowledgments}
+
+This work benefited from AI assistance during its development. Claude Opus~4.5 contributed to strategic planning, problem formulation, and proof review. GPT-5.2 Codex assisted with formalization, Lean proof development, and cross-checking between the mathematical exposition and formal statements.
+
+The Lean development builds on the Mathlib library; we thank its contributors for the integration and special function infrastructure that made this work possible.
+
+\begin{thebibliography}{99}
+
+\bibitem{shannon1948}
+C.~E. Shannon.
+\newblock A mathematical theory of communication.
+\newblock {\em The Bell System Technical Journal}, 27(3):379--423, 1948.
+\newblock \doi{10.1002/j.1538-7305.1948.tb01338.x}
+
+\bibitem{berger1971}
+T.~Berger.
+\newblock {\em Rate Distortion Theory: A Mathematical Basis for Data Compression}.
+\newblock Prentice-Hall, Englewood Cliffs, NJ, 1971.
+
+\bibitem{cover2006}
+T.~M. Cover and J.~A. Thomas.
+\newblock {\em Elements of Information Theory}.
+\newblock Wiley-Interscience, 2nd edition, 2006.
+
+\bibitem{stam1959}
+A.~J. Stam.
+\newblock Some inequalities satisfied by the quantities of information of {F}isher and {S}hannon.
+\newblock {\em Information and Control}, 2(2):101--112, 1959.
+
+\bibitem{dembo1991}
+A.~Dembo, T.~M. Cover, and J.~A. Thomas.
+\newblock Information theoretic inequalities.
+\newblock {\em IEEE Transactions on Information Theory}, 37(6):1501--1518, 1991.
+\newblock \doi{10.1109/18.104312}
+
+\bibitem{affeldt2014}
+R.~Affeldt, M.~Hagiwara, and J.~S{\'e}nizergues.
+\newblock Formalization of {S}hannon's theorems.
+\newblock {\em Journal of Automated Reasoning}, 53(1):63--103, 2014.
+\newblock \doi{10.1007/s10817-013-9298-1}
+
+\bibitem{dytso2018}
+A.~Dytso, R.~Bustin, H.~V. Poor, and S.~Shamai.
+\newblock Analytical properties of generalized {G}aussian distributions.
+\newblock {\em Journal of Statistical Distributions and Applications}, 5(1):1--40, 2018.
+\newblock \doi{10.1186/s40488-018-0088-5}
+
+\end{thebibliography}
+
+\end{document}

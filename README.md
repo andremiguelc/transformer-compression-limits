@@ -8,6 +8,10 @@ An investigation into the fundamental limits of transformer weight compression, 
 
 This project pursues a theory-first approach: characterizing the gap between practice and information-theoretic bounds, then identifying which gaps represent genuine algorithmic opportunities versus fundamental limits.
 
+## Paper
+
+See [paper/rd_gap_formalization.pdf](paper/rd_gap_formalization.pdf) for the formal write-up of the Lean 4 formalization.
+
 ---
 
 ## Key Empirical Findings
