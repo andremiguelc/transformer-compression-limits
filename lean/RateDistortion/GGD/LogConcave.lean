@@ -62,14 +62,17 @@ theorem ggd_logconcave
     have hconv' := hconv.2 hx0 hy0 ht_ge ht1 hsum
     -- rewrite scalar multiplication
     simpa [smul_eq_mul, mul_comm, mul_left_comm, mul_assoc] using hconv'
-  -- Combine h1 and h2, then use monotonicity of z ↦ z^β and scaling by α.
-  -- This yields the desired log-concavity inequality.
+  -- Now we chain the inequalities to prove log-concavity.
+  -- The goal is: (|tx + (1-t)y|/α)^β ≤ t·(|x|/α)^β + (1-t)·(|y|/α)^β
+  -- We proceed in three steps:
+  -- Step A: Scale the triangle inequality by 1/α
   have hdiv :
       |t * x + (1 - t) * y| / alpha ≤
         t * (|x| / alpha) + (1 - t) * (|y| / alpha) := by
     have h1' := (div_le_div_of_nonneg_right h1 (le_of_lt halpha))
     -- linearity of division by alpha
     simpa [div_eq_mul_inv, mul_add, add_mul, mul_comm, mul_left_comm, mul_assoc] using h1'
+  -- Step B: Apply monotonicity of z ↦ z^β on [0,∞) to lift the inequality to powers
   have hpow1 :
       (|t * x + (1 - t) * y| / alpha) ^ beta ≤
         (t * (|x| / alpha) + (1 - t) * (|y| / alpha)) ^ beta := by
@@ -77,9 +80,12 @@ theorem ggd_logconcave
       exact div_nonneg (abs_nonneg _) (le_of_lt halpha)
     have hbeta0 : 0 ≤ beta := by linarith
     exact Real.rpow_le_rpow hnonneg hdiv hbeta0
+  -- Step C: Apply convexity of z ↦ z^β (for β ≥ 1) to get the Jensen-type inequality:
+  -- (t·a + (1-t)·b)^β ≤ t·a^β + (1-t)·b^β
   have hconv2 :
       (t * (|x| / alpha) + (1 - t) * (|y| / alpha)) ^ beta ≤
         t * (|x| / alpha) ^ beta + (1 - t) * (|y| / alpha) ^ beta := by
+    -- Convexity of z ↦ z^β on [0, ∞) for β ≥ 1 (from Mathlib's convexOn_rpow)
     have hconv := convexOn_rpow (p := beta) hbeta
     have hx0 : |x| / alpha ∈ Set.Ici (0:ℝ) := by
       have : 0 ≤ |x| / alpha := div_nonneg (abs_nonneg _) (le_of_lt halpha)
@@ -90,6 +96,7 @@ theorem ggd_logconcave
     have hsum : t + (1 - t) = 1 := by ring
     have hconv' := hconv.2 hx0 hy0 ht_ge ht1 hsum
     simpa [smul_eq_mul, mul_comm, mul_left_comm, mul_assoc] using hconv'
+  -- Combine steps B and C by transitivity: this is the key convexity bound
   have hA :
       (|t * x + (1 - t) * y| / alpha) ^ beta ≤
         t * (|x| / alpha) ^ beta + (1 - t) * (|y| / alpha) ^ beta :=

@@ -20,15 +20,29 @@ Gap bound via de Bruijn identity (in nats).
 
 The RD gap is bounded by the entropy increase under Gaussian smoothing,
 which equals (1/2) times the integral of Fisher information.
+
+## Proof Strategy
+
+1. **Upper bound R(D)**: Use the Gaussian test channel (X̂ = X + N where N ~ N(0,D))
+   to get R(D) ≤ h(X + N) - (1/2)log(2πeD).
+
+2. **Apply de Bruijn identity**: The entropy of X_t = X + N_t (where N_t ~ N(0,t))
+   satisfies dh(X_t)/dt = (1/2)J(X_t), where J is Fisher information.
+
+3. **Integrate**: Integrating from t=0 to t=D gives
+   h(X_D) - h(X) = (1/2) ∫₀^D J(X_t) dt.
+
+4. **Combine**: Substituting back yields the bound on the RD gap.
 -/
 theorem rdGap_via_deBruijn (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D)
     (hf : IsDensity f) (hfi : HasFiniteFisherInfo f) :
   rateDistortionFunctionNats f D - diffEntropyNats f + (1/2) * Real.log (2 * Real.pi * Real.exp 1 * D)
     ≤ (1/2) * ∫ s in (0:ℝ)..D, fisherInfo (gaussConv f s) := by
-  -- Use the Gaussian test-channel achievability and the integrated de Bruijn identity.
+  -- Step 1: Upper bound R(D) via Gaussian test channel achievability.
   have hAch := gaussianTestChannel_achievable f D hD hf
+  -- Step 2-3: Integrated de Bruijn identity: h(X_D) - h(X) = (1/2)∫₀^D J(X_t) dt
   have hDeb := deBruijn_integrated_from_zero f D hD hf hfi
-  -- Replace R(D) by the test-channel rate and rewrite the entropy difference.
+  -- Step 4: Combine the bounds by replacing R(D) with the test-channel rate.
   have h1 :
       rateDistortionFunctionNats f D - diffEntropyNats f +
         (1 / 2) * Real.log (2 * Real.pi * Real.exp 1 * D)
@@ -52,6 +66,9 @@ theorem rdGap_via_deBruijn (f : ℝ → ℝ) (D : ℝ) (hD : 0 < D)
 /--
 If Fisher information is bounded by J_max along the Gaussian smoothing path,
 then the RD gap is at most (D/2)·J_max.
+
+This follows from `rdGap_via_deBruijn` by bounding the integrand:
+  (1/2) ∫₀^D J(X_t) dt ≤ (1/2) ∫₀^D J_max dt = (D/2)·J_max
 -/
 theorem rdGap_bound_via_fisherBound (f : ℝ → ℝ) (D J_max : ℝ)
     (hD : 0 < D) (hf : IsDensity f) (hfi : HasFiniteFisherInfo f)
@@ -59,7 +76,7 @@ theorem rdGap_bound_via_fisherBound (f : ℝ → ℝ) (D J_max : ℝ)
   rateDistortionFunctionNats f D - diffEntropyNats f +
       (1/2) * Real.log (2 * Real.pi * Real.exp 1 * D)
     ≤ (D / 2) * J_max := by
-  -- Bound the Fisher integral by J_max on [0, D].
+  -- Start from the de Bruijn bound, then bound the Fisher integral by J_max on [0, D].
   have h0 := rdGap_via_deBruijn f D hD hf hfi
   have hJ' : ∀ s, s ∈ Set.Icc (0:ℝ) D → fisherInfo (gaussConv f s) ≤ J_max := by
     intro s hs

@@ -158,6 +158,9 @@ theorem ggd_abs_moment_integral
   have hGammaPos : 0 < Real.Gamma (1 / beta) := by
     exact Real.Gamma_pos_of_pos (one_div_pos.mpr hbeta)
   have hGamma0 : Real.Gamma (1 / beta) ≠ 0 := ne_of_gt hGammaPos
+  -- Key scaling lemma: substituting y = x/α transforms the integral.
+  -- The Jacobian contributes a factor of α, and |x|^p = (α|y|)^p = α^p|y|^p,
+  -- giving a total factor of α^(p+1).
   have hscale :
       (∫ x : ℝ, (|x|) ^ p * Real.exp (-(|x| / alpha) ^ beta))
         =
@@ -183,7 +186,7 @@ theorem ggd_abs_moment_integral
             _ = |x| := by simp [halpha0]
         simp [hmul, div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc]
       simpa [abs_div, abs_of_nonneg (le_of_lt halpha), smul_eq_mul, div_eq_mul_inv, hsim] using h
-    -- pull out alpha^p
+    -- Pull out alpha^p from the integral using |alpha·y|^p = alpha^p·|y|^p (since alpha > 0)
     have h'' :
         (∫ y : ℝ, (|alpha * y|) ^ p * Real.exp (-|y| ^ beta))
           =
@@ -211,12 +214,13 @@ theorem ggd_abs_moment_integral
                 (MeasureTheory.integral_const_mul
                   (alpha ^ p)
                   (fun y : ℝ => (|y|) ^ p * Real.exp (-|y| ^ beta)))
+    -- Combine the factors: α (from Jacobian) × α^p (from |x|^p) = α^(p+1)
     calc
       (∫ x : ℝ, (|x|) ^ p * Real.exp (-(|x| / alpha) ^ beta))
           = alpha * (alpha ^ p * ∫ y : ℝ, (|y|) ^ p * Real.exp (-|y| ^ beta)) := by
               simpa [h'] using congrArg (fun z => alpha * z) h''
       _ = alpha ^ (p + 1) * ∫ y : ℝ, (|y|) ^ p * Real.exp (-|y| ^ beta) := by
-              -- use rpow_add to combine alpha * alpha^p
+              -- use rpow_add to combine alpha * alpha^p = alpha^(p+1)
               have hαpos : 0 < alpha := halpha
               have hpow : alpha ^ p * alpha = alpha ^ (p + 1) := by
                 have h := Real.rpow_add (x := alpha) (y := p) (z := 1) hαpos

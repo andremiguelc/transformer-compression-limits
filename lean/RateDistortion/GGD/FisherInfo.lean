@@ -89,7 +89,9 @@ lemma ggdScore_eq_deriv_log {beta alpha : ℝ} (hbeta : 1 < beta) (halpha : 0 < 
           -((1 / alpha ^ beta) * (beta * |x| ^ (beta - 2) * x)) := by
       simpa using hneg.deriv
     exact h1.trans h2
-  -- Convert sign(x)*|x| to x to match the score expression.
+  -- Key identity: sign(x)·|x| = x for all real x.
+  -- This converts between the score's sign·|x|^(β-1) form and the derivative's x·|x|^(β-2) form.
+  -- Proof by cases: x > 0 gives (+1)·x = x; x < 0 gives (-1)·(-x) = x; x = 0 is trivial.
   have hsign_abs : Real.sign x * |x| = x := by
     by_cases hx0 : x = 0
     · simp [hx0]
@@ -99,6 +101,11 @@ lemma ggdScore_eq_deriv_log {beta alpha : ℝ} (hbeta : 1 < beta) (halpha : 0 < 
           simp [Real.sign_of_neg hlt, abs_of_neg hlt, mul_comm, mul_left_comm, mul_assoc]
       | inr hgt =>
           simp [Real.sign_of_pos hgt, abs_of_pos hgt]
+  -- Power conversion: sign(x)·|x|^(β-1) = |x|^(β-2)·x
+  -- This uses two facts:
+  -- 1. |x|^(β-1) = |x|^(β-2)·|x|  (split off one power)
+  -- 2. sign(x)·|x| = x            (from hsign_abs above)
+  -- Together: sign(x)·|x|^(β-1) = |x|^(β-2)·(sign(x)·|x|) = |x|^(β-2)·x
   have hpow_sign :
       Real.sign x * |x| ^ (beta - 1) = |x| ^ (beta - 2) * x := by
     by_cases hx0 : x = 0
@@ -115,7 +122,8 @@ lemma ggdScore_eq_deriv_log {beta alpha : ℝ} (hbeta : 1 < beta) (halpha : 0 < 
             = Real.sign x * (|x| ^ (beta - 2) * |x|) := by simp [hpow]
         _ = |x| ^ (beta - 2) * (Real.sign x * |x|) := by ring
         _ = |x| ^ (beta - 2) * x := by simp [hsign_abs]
-  -- Rewriting ggdScore into the same algebraic form as the derivative.
+  -- Final step: rewrite the score -(β/α^β)·sign(x)·|x|^(β-1) into the derivative form
+  -- -(1/α^β)·β·|x|^(β-2)·x, using the power conversion above.
   have hscore :
       ggdScore beta alpha x =
         -((1 / alpha ^ beta) * (beta * |x| ^ (beta - 2) * x)) := by
@@ -331,7 +339,11 @@ theorem ggd_fisher_info_formula
       alpha ^ (2 * (beta - 1)) = alpha ^ (2 * beta - 2) := by ring_nf
       _ = alpha ^ (2 * beta) / alpha ^ 2 := by
             simpa using (Real.rpow_sub hpos (2 * beta) 2)
-  -- Collapse the prefactor (β / α^β)^2 * α^(2β-2) into β^2 / α^2.
+  -- Collapse the prefactor (β/α^β)² · α^(2β-2) into β²/α².
+  -- Key insight: the α^β terms cancel, leaving only α² in the denominator.
+  --   (β/α^β)² · α^(2β-2) = β²/α^(2β) · α^(2β-2)
+  --                        = β²/α^(2β) · α^(2β)/α²    [since α^(2β-2) = α^(2β)/α²]
+  --                        = β²/α²
   have hconst :
       (beta / alpha ^ beta) ^ 2 * alpha ^ (2 * (beta - 1)) =
         beta ^ 2 / alpha ^ 2 := by
